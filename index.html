@@ -1,109 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Assembly Tracking</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f2f2f2;
-    margin: 0;
-    padding: 20px;
-  }
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  padding: 20px;
+  margin: 0;
+}
 
-  .card {
-    max-width: 480px;
-    margin: auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
-  }
+.card {
+  max-width: 520px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
 
-  h1 {
-    text-align: center;
-    margin-top: 0;
-  }
+.logo {
+  display: block;
+  margin: 0 auto 10px;
+  max-width: 160px;
+}
 
-  .instructions {
-    background: #f6f6f6;
-    padding: 14px;
-    border-radius: 12px;
-    font-size: 14px;
-    margin-bottom: 16px;
-  }
+h1 {
+  text-align: center;
+  margin: 10px 0;
+}
 
-  label {
-    font-weight: bold;
-    margin-top: 14px;
-    display: block;
-  }
+.instructions {
+  background: #f6f6f6;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
 
-  input, select, textarea {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    margin-top: 6px;
-  }
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 14px;
+}
 
-  textarea {
-    resize: vertical;
-  }
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  margin-top: 6px;
+}
 
-  .dishes {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-    margin-top: 10px;
-  }
+textarea {
+  resize: vertical;
+}
 
-  .dishes button {
-    padding: 16px 0;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 10px;
-    border: 2px solid #6b46c1;
-    background: #f5f5f5;
-    cursor: pointer;
-  }
+.dishes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
 
-  .dishes button.active {
-    background: #6b46c1;
-    color: #fff;
-  }
+.dish {
+  border: 2px solid #6b46c1;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+}
 
-  .submit-btn {
-    margin-top: 22px;
-    width: 100%;
-    padding: 16px;
-    font-size: 18px;
-    border-radius: 12px;
-    border: none;
-    background: #6b46c1;
-    color: white;
-    cursor: pointer;
-  }
+.dish button {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.dish button.active {
+  background: #6b46c1;
+  color: white;
+}
+
+.qty {
+  display: none;
+  margin-top: 6px;
+}
+
+.qty input {
+  padding: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.submit-btn {
+  margin-top: 22px;
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  border-radius: 12px;
+  border: none;
+  background: #6b46c1;
+  color: white;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
+  <!-- 🔴 REPLACE LOGO LINK BELOW -->
+  <img 
+    src="PASTE_BELLA_BONA_LOGO_URL_HERE"
+    alt="Bella & Bona"
+    class="logo"
+  >
+  <!-- 🔴 END -->
+
   <h1>Assembly Tracking</h1>
 
   <div class="instructions">
     1. Select your name<br>
-    2. Tap all dishes you worked on (A–Z)<br>
-    3. Select your role<br>
-    4. Submit (you can submit multiple times per day)
+    2. Tap dish letters (A–Z)<br>
+    3. Enter quantity per dish<br>
+    4. Submit (multiple submissions per day allowed)
   </div>
 
   <form onsubmit="submitForm(event)">
-
     <label>Date</label>
     <input type="date" id="date" required>
 
@@ -137,59 +170,63 @@
 </div>
 
 <script>
-  document.getElementById("date").valueAsDate = new Date();
+document.getElementById("date").valueAsDate = new Date();
+const dishesContainer = document.getElementById("dishes");
 
-  const dishesContainer = document.getElementById("dishes");
-  let selectedDishes = [];
+for (let i = 65; i <= 90; i++) {
+  const letter = String.fromCharCode(i);
 
-  // Create A–Z dish buttons
-  for (let i = 65; i <= 90; i++) {
-    const letter = String.fromCharCode(i);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = letter;
+  const wrapper = document.createElement("div");
+  wrapper.className = "dish";
 
-    btn.onclick = () => {
-      if (selectedDishes.includes(letter)) {
-        selectedDishes = selectedDishes.filter(d => d !== letter);
-        btn.classList.remove("active");
-      } else {
-        selectedDishes.push(letter);
-        btn.classList.add("active");
-      }
-    };
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = letter;
 
-    dishesContainer.appendChild(btn);
-  }
+  const qtyDiv = document.createElement("div");
+  qtyDiv.className = "qty";
+  qtyDiv.innerHTML = `<input type="number" min="1" placeholder="Qty">`;
 
-  function submitForm(e) {
-    e.preventDefault();
+  btn.onclick = () => {
+    btn.classList.toggle("active");
+    qtyDiv.style.display = btn.classList.contains("active") ? "block" : "none";
+    if (!btn.classList.contains("active")) qtyDiv.querySelector("input").value = "";
+  };
 
-    if (selectedDishes.length === 0) {
-      alert("Please select at least one dish");
-      return;
+  wrapper.appendChild(btn);
+  wrapper.appendChild(qtyDiv);
+  dishesContainer.appendChild(wrapper);
+}
+
+function submitForm(e) {
+  e.preventDefault();
+
+  const dishes = [];
+  document.querySelectorAll(".dish").forEach(d => {
+    const b = d.querySelector("button");
+    if (b.classList.contains("active")) {
+      const qty = d.querySelector("input").value;
+      if (!qty) return alert("Enter quantity for " + b.textContent);
+      dishes.push(b.textContent + ":" + qty);
     }
+  });
 
-    const payload = {
+  if (!dishes.length) return alert("Select at least one dish");
+
+  fetch("https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec", {
+    method: "POST",
+    body: JSON.stringify({
       date: date.value,
       employee: employee.value,
-      dishes: selectedDishes.join(", "),
+      dishes: dishes.join(" | "),
       role: role.value,
       comment: comment.value
-    };
-
-    fetch("https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec", {
-      method: "POST",
-      body: JSON.stringify(payload)
     })
-    .then(() => {
-      alert("Submitted successfully ✔");
-      selectedDishes = [];
-      document.querySelectorAll(".dishes button").forEach(b => b.classList.remove("active"));
-      comment.value = "";
-    })
-    .catch(() => alert("Error submitting data"));
-  }
+  }).then(() => {
+    alert("Submitted ✔");
+    location.reload();
+  });
+}
 </script>
 
 </body>
