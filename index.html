@@ -87,10 +87,6 @@
     color: white;
     cursor: pointer;
   }
-
-  .submit-btn:hover {
-    background: #553c9a;
-  }
 </style>
 </head>
 
@@ -103,7 +99,7 @@
     1. Select your name<br>
     2. Tap all dishes you worked on (A–Z)<br>
     3. Select your role<br>
-    4. Submit (multiple submissions per day allowed)
+    4. Submit (you can submit multiple times per day)
   </div>
 
   <form onsubmit="submitForm(event)">
@@ -146,7 +142,7 @@
   const dishesContainer = document.getElementById("dishes");
   let selectedDishes = [];
 
-  // Generate A–Z buttons
+  // Create A–Z dish buttons
   for (let i = 65; i <= 90; i++) {
     const letter = String.fromCharCode(i);
     const btn = document.createElement("button");
@@ -174,7 +170,7 @@
       return;
     }
 
-    const data = {
+    const payload = {
       date: date.value,
       employee: employee.value,
       dishes: selectedDishes.join(", "),
@@ -182,14 +178,17 @@
       comment: comment.value
     };
 
-    console.log("SUBMITTED:", data);
-
-    alert("Submitted successfully ✔");
-
-    // reset dishes + comment
-    selectedDishes = [];
-    document.querySelectorAll(".dishes button").forEach(b => b.classList.remove("active"));
-    comment.value = "";
+    fetch("https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      alert("Submitted successfully ✔");
+      selectedDishes = [];
+      document.querySelectorAll(".dishes button").forEach(b => b.classList.remove("active"));
+      comment.value = "";
+    })
+    .catch(() => alert("Error submitting data"));
   }
 </script>
 
