@@ -1,100 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Assembly Tracking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<title>Assembly Tracking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 16px;
-    }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
 
-    .card {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      max-width: 420px;
-      margin: auto;
-    }
+  .app {
+    max-width: 420px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
 
-    h2 {
-      margin-top: 0;
-    }
+  h1 {
+    margin-top: 0;
+  }
 
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
+  .instructions {
+    font-size: 14px;
+    background: #f0f0f0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
 
-    select, input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-size: 16px;
-    }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+  }
 
-    button {
-      margin-top: 20px;
-      background: #673ab7;
-      color: white;
-      border: none;
-      border-radius: 6px;
-    }
-  </style>
+  input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .dishes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .dishes button {
+    padding: 18px 0;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #eee;
+  }
+
+  .dishes button.active {
+    background: #4caf50;
+    color: white;
+    border-color: #4caf50;
+  }
+
+  .submit-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    background: #673ab7;
+    color: white;
+    border: none;
+    border-radius: 10px;
+  }
+</style>
 </head>
 
 <body>
-  <div class="card">
-    <h2>Assembly Tracking</h2>
 
-    <p>
-      1. Select your name<br>
-      2. Choose the dishes you worked on<br>
-      3. Select your role<br>
-      4. Submit
-    </p>
+<div class="app">
+  <h1>Assembly Tracking</h1>
 
-    <label>Date</label>
-    <input type="date" id="date">
-
-    <label>Employee</label>
-    <select id="employee">
-      <option value="">Select name</option>
-      <option>Joel</option>
-      <option>Richa</option>
-      <option>Jash</option>
-      <option>Hamid</option>
-    </select>
-
-    <label>Dishes</label>
-    <label><input type="checkbox" value="Pasta"> Pasta</label>
-    <label><input type="checkbox" value="Curry"> Curry</label>
-    <label><input type="checkbox" value="Salad"> Salad</label>
-
-    <label>Role</label>
-    <select id="role">
-      <option>Main</option>
-      <option>Assist</option>
-      <option>Support</option>
-    </select>
-
-    <label>Comment (optional)</label>
-    <textarea id="comment"></textarea>
-
-    <button onclick="submitForm()">Submit</button>
+  <div class="instructions">
+    1. Select your name<br>
+    2. Tap all dishes you worked on (A, B, C…)<br>
+    3. Select your role<br>
+    4. Submit (you can submit multiple times per day)
   </div>
 
-  <script>
-    document.getElementById("date").valueAsDate = new Date();
+  <label>Date</label>
+  <input type="date" id="date">
 
-    function submitForm() {
-      alert("This works 👍 Backend comes next");
+  <label>Employee</label>
+  <select id="employee">
+    <option value="">Select name</option>
+    <option>Joel</option>
+    <option>Richa</option>
+    <option>Jash</option>
+    <option>Hamid</option>
+    <option>Varush</option>
+    <option>Ranjith</option>
+    <option>Salman</option>
+  </select>
+
+  <label>Dishes</label>
+  <div class="dishes">
+    <button type="button" onclick="toggleDish(this)">A</button>
+    <button type="button" onclick="toggleDish(this)">B</button>
+    <button type="button" onclick="toggleDish(this)">C</button>
+    <button type="button" onclick="toggleDish(this)">D</button>
+    <button type="button" onclick="toggleDish(this)">E</button>
+    <button type="button" onclick="toggleDish(this)">F</button>
+    <button type="button" onclick="toggleDish(this)">G</button>
+    <button type="button" onclick="toggleDish(this)">H</button>
+  </div>
+
+  <label>Role</label>
+  <select id="role">
+    <option>Main</option>
+    <option>Assist</option>
+    <option>Support</option>
+  </select>
+
+  <label>Comment (optional)</label>
+  <textarea id="comment" rows="3"></textarea>
+
+  <button class="submit-btn" onclick="submitForm()">Submit</button>
+</div>
+
+<script>
+  // Auto-set today
+  document.getElementById("date").valueAsDate = new Date();
+
+  let selectedDishes = [];
+
+  function toggleDish(btn) {
+    const dish = btn.innerText;
+
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      selectedDishes = selectedDishes.filter(d => d !== dish);
+    } else {
+      btn.classList.add("active");
+      selectedDishes.push(dish);
     }
-  </script>
+  }
+
+  function submitForm() {
+    if (!employee.value || selectedDishes.length === 0) {
+      alert("Please select employee and at least one dish.");
+      return;
+    }
+
+    alert(
+      "Saved!\n\n" +
+      "Employee: " + employee.value +
+      "\nDate: " + date.value +
+      "\nDishes: " + selectedDishes.join(", ") +
+      "\nRole: " + role.value
+    );
+
+    // Reset for next entry
+    selectedDishes = [];
+    document.querySelectorAll(".dishes button").forEach(b => b.classList.remove("active"));
+    comment.value = "";
+  }
+</script>
+
 </body>
 </html>
-
