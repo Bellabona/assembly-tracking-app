@@ -24,13 +24,13 @@ body {
 
 .logo {
   display: block;
-  margin: 0 auto 10px;
-  max-width: 160px;
+  max-width: 180px;
+  margin: 0 auto 12px;
 }
 
 h1 {
   text-align: center;
-  margin: 10px 0;
+  margin-top: 0;
 }
 
 .instructions {
@@ -79,10 +79,10 @@ textarea {
   padding: 10px 0;
   font-size: 18px;
   font-weight: bold;
-  border-radius: 8px;
   border: none;
   background: #f5f5f5;
   cursor: pointer;
+  border-radius: 8px;
 }
 
 .dish button.active {
@@ -119,13 +119,8 @@ textarea {
 
 <div class="card">
 
-  <!-- 🔴 REPLACE LOGO LINK BELOW -->
-  <img 
-    src="PASTE_BELLA_BONA_LOGO_URL_HERE"
-    alt="Bella & Bona"
-    class="logo"
-  >
-  <!-- 🔴 END -->
+  <!-- Bella & Bona logo -->
+  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" alt="Bella & Bona" class="logo">
 
   <h1>Assembly Tracking</h1>
 
@@ -167,12 +162,14 @@ textarea {
 
     <button class="submit-btn" type="submit">Submit</button>
   </form>
+
 </div>
 
 <script>
 document.getElementById("date").valueAsDate = new Date();
 const dishesContainer = document.getElementById("dishes");
 
+// Create buttons A–Z
 for (let i = 65; i <= 90; i++) {
   const letter = String.fromCharCode(i);
 
@@ -180,12 +177,11 @@ for (let i = 65; i <= 90; i++) {
   wrapper.className = "dish";
 
   const btn = document.createElement("button");
-  btn.type = "button";
   btn.textContent = letter;
 
   const qtyDiv = document.createElement("div");
   qtyDiv.className = "qty";
-  qtyDiv.innerHTML = `<input type="number" min="1" placeholder="Qty">`;
+  qtyDiv.innerHTML = '<input type="number" min="1" placeholder="Qty">';
 
   btn.onclick = () => {
     btn.classList.toggle("active");
@@ -222,10 +218,14 @@ function submitForm(e) {
       role: role.value,
       comment: comment.value
     })
-  }).then(() => {
+  })
+  .then(() => {
     alert("Submitted ✔");
-    location.reload();
-  });
+    document.querySelector("form").reset();
+    document.querySelectorAll(".qty").forEach(q => q.style.display = "none");
+    document.querySelectorAll(".dish button").forEach(b => b.classList.remove("active"));
+  })
+  .catch(() => alert("Error submitting data"));
 }
 </script>
 
