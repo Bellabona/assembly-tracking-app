@@ -7,7 +7,7 @@
 
 <style>
 body {
-  font-family: system-ui, -apple-system, Arial, sans-serif;
+  font-family: system-ui, Arial, sans-serif;
   background: #f3f4f6;
   margin: 0;
   padding: 16px;
@@ -47,7 +47,7 @@ label {
   margin-top: 14px;
 }
 
-input, select, textarea {
+input, textarea {
   width: 100%;
   padding: 12px;
   font-size: 16px;
@@ -56,12 +56,24 @@ input, select, textarea {
   margin-top: 6px;
 }
 
-select[multiple] {
-  height: 140px;
-}
-
 textarea {
   resize: vertical;
+}
+
+.employees {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.emp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  padding: 10px;
+  border-radius: 10px;
 }
 
 .dishes {
@@ -114,23 +126,19 @@ textarea {
   background: #6b46c1;
   color: white;
 }
-
-.submit-btn:disabled {
-  background: #999;
-}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" class="logo" alt="Bella & Bona">
+  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" class="logo">
 
   <h1>Assembly Tracking</h1>
 
   <div class="instructions">
     1. Select date<br>
-    2. Select employees who worked together<br>
+    2. Tick all employees who worked together<br>
     3. Select dishes (A–Z) and quantities<br>
     4. Submit
   </div>
@@ -141,32 +149,23 @@ textarea {
     <input type="date" id="date" required>
 
     <label>Employees</label>
-    <select id="employees" multiple required>
-      <option>Joel</option>
-      <option>Richa</option>
-      <option>Jash</option>
-      <option>Hamid</option>
-      <option>Varush</option>
-      <option>Ranjith</option>
-      <option>Salman</option>
-    </select>
+    <div class="employees" id="employees">
+      <div class="emp"><input type="checkbox" value="Joel"> Joel</div>
+      <div class="emp"><input type="checkbox" value="Richa"> Richa</div>
+      <div class="emp"><input type="checkbox" value="Jash"> Jash</div>
+      <div class="emp"><input type="checkbox" value="Hamid"> Hamid</div>
+      <div class="emp"><input type="checkbox" value="Varush"> Varush</div>
+      <div class="emp"><input type="checkbox" value="Ranjith"> Ranjith</div>
+      <div class="emp"><input type="checkbox" value="Salman"> Salman</div>
+    </div>
 
     <label>Dishes (A–Z)</label>
     <div class="dishes" id="dishes"></div>
 
-    <label>Role</label>
-    <select id="role" required>
-      <option>Main</option>
-      <option>Assist</option>
-      <option>Support</option>
-    </select>
-
     <label>Comment (optional)</label>
     <textarea id="comment" rows="3"></textarea>
 
-    <button class="submit-btn" id="submitBtn" type="submit">
-      Submit
-    </button>
+    <button class="submit-btn" type="submit">Submit</button>
 
   </form>
 </div>
@@ -175,11 +174,9 @@ textarea {
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec";
 
-document.getElementById("date").valueAsDate = new Date();
+date.valueAsDate = new Date();
 
-const dishesContainer = document.getElementById("dishes");
-
-// Create A–Z dish buttons
+// A–Z dishes
 for (let i = 65; i <= 90; i++) {
   const letter = String.fromCharCode(i);
 
@@ -200,31 +197,29 @@ for (let i = 65; i <= 90; i++) {
     if (!btn.classList.contains("active")) qty.querySelector("input").value = "";
   };
 
-  wrap.appendChild(btn);
-  wrap.appendChild(qty);
-  dishesContainer.appendChild(wrap);
+  wrap.append(btn, qty);
+  dishes.appendChild(wrap);
 }
 
-document.getElementById("form").addEventListener("submit", function(e) {
+form.addEventListener("submit", e => {
   e.preventDefault();
 
-  const employees = [...employees.selectedOptions].map(o => o.value);
-  if (!employees.length) return alert("Select employees");
+  const employees = [...document.querySelectorAll("#employees input:checked")]
+    .map(e => e.value);
 
-  const dishes = [];
+  if (!employees.length) return alert("Select at least one employee");
+
+  const dishesData = [];
   document.querySelectorAll(".dish").forEach(d => {
     const b = d.querySelector("button");
     if (b.classList.contains("active")) {
       const q = d.querySelector("input").value;
       if (!q) return alert("Enter quantity for " + b.textContent);
-      dishes.push(b.textContent + ":" + q);
+      dishesData.push(b.textContent + ":" + q);
     }
   });
 
-  if (!dishes.length) return alert("Select at least one dish");
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Submitting…";
+  if (!dishesData.length) return alert("Select at least one dish");
 
   fetch(scriptURL, {
     method: "POST",
@@ -233,16 +228,16 @@ document.getElementById("form").addEventListener("submit", function(e) {
     body: JSON.stringify({
       date: date.value,
       employees: employees.join(", "),
-      dishes: dishes.join(" | "),
-      role: role.value,
+      dishes: dishesData.join(" | "),
       comment: comment.value
     })
-  }).then(() => {
-    alert("Saved successfully ✔");
-    location.reload();
   });
+
+  alert("Saved ✔");
+  location.reload();
 });
 </script>
 
 </body>
 </html>
+
