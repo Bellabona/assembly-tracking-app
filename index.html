@@ -7,24 +7,24 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
-  padding: 20px;
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  background: #f3f4f6;
   margin: 0;
+  padding: 16px;
 }
 
 .card {
   max-width: 560px;
   margin: auto;
   background: #fff;
-  padding: 22px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.12);
 }
 
 .logo {
   display: block;
-  max-width: 180px;
+  max-width: 170px;
   margin: 0 auto 10px;
 }
 
@@ -34,7 +34,7 @@ h1 {
 }
 
 .instructions {
-  background: #f6f6f6;
+  background: #f8fafc;
   padding: 14px;
   border-radius: 12px;
   font-size: 14px;
@@ -42,7 +42,7 @@ h1 {
 }
 
 label {
-  font-weight: bold;
+  font-weight: 600;
   display: block;
   margin-top: 14px;
 }
@@ -57,37 +57,40 @@ input, select, textarea {
 }
 
 select[multiple] {
-  height: 150px;
+  height: 140px;
+}
+
+textarea {
+  resize: vertical;
 }
 
 .dishes {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
 
 .dish {
   border: 2px solid #6b46c1;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 8px;
   text-align: center;
 }
 
 .dish button {
   width: 100%;
-  padding: 10px 0;
+  padding: 12px 0;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 700;
   border: none;
-  background: #f5f5f5;
-  cursor: pointer;
+  background: #f3f4f6;
   border-radius: 8px;
 }
 
 .dish button.active {
   background: #6b46c1;
-  color: white;
+  color: #fff;
 }
 
 .qty {
@@ -106,11 +109,14 @@ select[multiple] {
   width: 100%;
   padding: 16px;
   font-size: 18px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
   background: #6b46c1;
   color: white;
-  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  background: #999;
 }
 </style>
 </head>
@@ -118,24 +124,23 @@ select[multiple] {
 <body>
 
 <div class="card">
-
-  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" class="logo">
+  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" class="logo" alt="Bella & Bona">
 
   <h1>Assembly Tracking</h1>
 
   <div class="instructions">
     1. Select date<br>
-    2. Select all employees who worked together<br>
-    3. Select dish letters (A–Z) & quantities<br>
-    4. Submit (multiple submissions allowed)
+    2. Select employees who worked together<br>
+    3. Select dishes (A–Z) and quantities<br>
+    4. Submit
   </div>
 
-  <form onsubmit="submitForm(event)">
+  <form id="form">
 
     <label>Date</label>
     <input type="date" id="date" required>
 
-    <label>Employees (multi-select)</label>
+    <label>Employees</label>
     <select id="employees" multiple required>
       <option>Joel</option>
       <option>Richa</option>
@@ -159,16 +164,22 @@ select[multiple] {
     <label>Comment (optional)</label>
     <textarea id="comment" rows="3"></textarea>
 
-    <button class="submit-btn" type="submit">Submit</button>
-  </form>
+    <button class="submit-btn" id="submitBtn" type="submit">
+      Submit
+    </button>
 
+  </form>
 </div>
 
 <script>
+const scriptURL =
+  "https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec";
+
 document.getElementById("date").valueAsDate = new Date();
+
 const dishesContainer = document.getElementById("dishes");
 
-// Create A–Z dishes
+// Create A–Z dish buttons
 for (let i = 65; i <= 90; i++) {
   const letter = String.fromCharCode(i);
 
@@ -179,69 +190,59 @@ for (let i = 65; i <= 90; i++) {
   btn.type = "button";
   btn.textContent = letter;
 
-  const qtyDiv = document.createElement("div");
-  qtyDiv.className = "qty";
-  qtyDiv.innerHTML = '<input type="number" min="1" placeholder="Qty">';
+  const qty = document.createElement("div");
+  qty.className = "qty";
+  qty.innerHTML = '<input type="number" min="1" placeholder="Qty">';
 
   btn.onclick = () => {
     btn.classList.toggle("active");
-    qtyDiv.style.display = btn.classList.contains("active") ? "block" : "none";
-    if (!btn.classList.contains("active")) qtyDiv.querySelector("input").value = "";
+    qty.style.display = btn.classList.contains("active") ? "block" : "none";
+    if (!btn.classList.contains("active")) qty.querySelector("input").value = "";
   };
 
   wrap.appendChild(btn);
-  wrap.appendChild(qtyDiv);
+  wrap.appendChild(qty);
   dishesContainer.appendChild(wrap);
 }
 
-function submitForm(e) {
+document.getElementById("form").addEventListener("submit", function(e) {
   e.preventDefault();
 
   const employees = [...employees.selectedOptions].map(o => o.value);
-  if (!employees.length) return alert("Select at least one employee");
+  if (!employees.length) return alert("Select employees");
 
-  const selectedDishes = [];
+  const dishes = [];
   document.querySelectorAll(".dish").forEach(d => {
     const b = d.querySelector("button");
     if (b.classList.contains("active")) {
-      const qty = d.querySelector("input").value;
-      if (!qty) return alert("Enter quantity for " + b.textContent);
-      selectedDishes.push({ letter: b.textContent, qty });
+      const q = d.querySelector("input").value;
+      if (!q) return alert("Enter quantity for " + b.textContent);
+      dishes.push(b.textContent + ":" + q);
     }
   });
 
-  if (!selectedDishes.length) return alert("Select at least one dish");
+  if (!dishes.length) return alert("Select at least one dish");
 
-  // send one row per dish
-  selectedDishes.forEach(dish => {
- fetch(
-  "https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec",
-  {
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting…";
+
+  fetch(scriptURL, {
     method: "POST",
     mode: "no-cors",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({
       date: date.value,
       employees: employees.join(", "),
-      dish: dish.letter,
-      quantity: dish.qty,
+      dishes: dishes.join(" | "),
       role: role.value,
       comment: comment.value
     })
-  }
-);
-
-
-  alert("Submitted successfully ✔");
-
-  document.querySelector("form").reset();
-  document.querySelectorAll(".qty").forEach(q => q.style.display = "none");
-  document.querySelectorAll(".dish button").forEach(b => b.classList.remove("active"));
-}
+  }).then(() => {
+    alert("Saved successfully ✔");
+    location.reload();
+  });
+});
 </script>
 
 </body>
 </html>
-
