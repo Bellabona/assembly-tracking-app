@@ -166,7 +166,7 @@ document.getElementById("form").addEventListener("submit", async e => {
     comment: document.getElementById("comment").value
   };
 
-  await fetch("PASTE_YOUR_APPS_SCRIPT_URL_HERE", {
+  await fetch("https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec", {
     method: "POST",
     body: JSON.stringify(payload)
   });
