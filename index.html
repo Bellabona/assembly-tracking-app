@@ -1,127 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bella&Bona – Assembly Tracking</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bellabona – Assembly Tracking</title>
 
 <style>
-:root {
-  --green:#0b5d3b;
-  --purple:#6a3db8;
-  --bg:#f3f4f6;
-  --card:#ffffff;
-}
-
-* { box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-
 body {
-  margin:0;
-  background:var(--bg);
-  padding:18px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f6f7fb;
+  margin: 0;
+  padding: 16px;
 }
 
 .card {
-  max-width:520px;
-  margin:auto;
-  background:var(--card);
-  border-radius:18px;
-  padding:22px;
-  box-shadow:0 10px 24px rgba(0,0,0,.08);
+  max-width: 520px;
+  margin: auto;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 .logo {
-  text-align:center;
-  margin-bottom:6px;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
 .logo img {
-  height:44px;
+  height: 48px;
 }
 
 h1 {
-  text-align:center;
-  margin:10px 0 14px;
+  text-align: center;
+  margin: 10px 0;
 }
 
 .instructions {
-  background:#eef2ff;
-  border-radius:12px;
-  padding:14px;
-  font-size:14px;
-  margin-bottom:16px;
+  background: #eef3ff;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 label {
-  font-weight:600;
-  display:block;
-  margin-top:14px;
-  margin-bottom:6px;
+  font-weight: 600;
+  display: block;
+  margin-top: 16px;
 }
 
-input, textarea {
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:16px;
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  margin-top: 6px;
 }
 
-textarea { resize:none; }
-
-.grid {
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px;
+.employees {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.checkbox {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:#f9fafb;
-  padding:10px;
-  border-radius:10px;
+.employees label {
+  font-weight: normal;
 }
 
 .dishes {
-  display:grid;
+  display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap:10px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .dish {
-  background:#f9fafb;
-  padding:10px;
-  border-radius:12px;
-  text-align:center;
+  background: #f1f3f9;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
 }
 
-.dish input[type="number"] {
-  margin-top:6px;
-  text-align:center;
+.dish strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
 button {
-  width:100%;
-  margin-top:20px;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  background:var(--purple);
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-
-button:active { opacity:.85 }
-
-.success {
-  display:none;
-  text-align:center;
-  color:var(--green);
-  font-weight:600;
-  margin-top:12px;
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: #6a3dbf;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -129,99 +105,97 @@ button:active { opacity:.85 }
 <body>
 <div class="card">
 
-  <div class="logo">
-    <img src="https://bellabona.com/hubfs/logo-bellabona.svg">
-  </div>
+<div class="logo">
+  <img src="https://bellabona.com/hubfs/logo-bellabona.svg">
+</div>
 
-  <h1>Assembly Tracking</h1>
+<h1>Assembly Tracking</h1>
 
-  <div class="instructions">
-    1. Select date<br>
-    2. Tick all employees who worked together<br>
-    3. Select dishes (A–Z) and quantities<br>
-    4. Submit (you can submit multiple times per day)
-  </div>
+<div class="instructions">
+1. Select date<br>
+2. Tick all employees who worked together<br>
+3. Enter dish letters (A–Z) and quantities<br>
+4. Submit (you can submit multiple times per day)
+</div>
 
-  <label>Date</label>
-  <input type="date" id="date">
+<label>Date</label>
+<input type="date" id="date">
 
-  <label>Employees</label>
-  <div class="grid" id="employees"></div>
+<label>Employees</label>
+<div class="employees" id="employees"></div>
 
-  <label>Dishes (A–Z) + Quantity</label>
-  <div class="dishes" id="dishes"></div>
+<label>Dishes (A–Z) + Quantity</label>
+<div class="dishes" id="dishes"></div>
 
-  <label>Comment (optional)</label>
-  <textarea id="comment" rows="3"></textarea>
+<label>Role</label>
+<select id="role">
+  <option>Main</option>
+  <option>Assist</option>
+  <option>Support</option>
+</select>
 
-  <button onclick="submitForm()">Submit</button>
-  <div class="success" id="success">Saved successfully ✅</div>
+<label>Comment (optional)</label>
+<textarea id="comment"></textarea>
+
+<button onclick="submitForm()">Submit</button>
 
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
 
 const employees = [
-  "Joel",
-  "Jash",
-  "Varush",
-  "Richa",
-  "Hamid",
-  "Salman",
-  "Ranjith",
-  "Sreekanth"
+  "Joel","Jash","Varush","Richa","Hamid",
+  "Salman","Ranjith","Sreekanth"
 ];
 
-const employeeBox = document.getElementById("employees");
-employees.forEach(e => {
-  employeeBox.innerHTML += `
-    <label class="checkbox">
-      <input type="checkbox" value="${e}"> ${e}
-    </label>`;
+const empBox = document.getElementById("employees");
+employees.forEach(n => {
+  empBox.innerHTML += `<label><input type="checkbox" value="${n}"> ${n}</label>`;
 });
 
 const dishBox = document.getElementById("dishes");
-for (let i=65;i<=90;i++) {
-  const l = String.fromCharCode(i);
+for (let i = 65; i <= 90; i++) {
+  const letter = String.fromCharCode(i);
   dishBox.innerHTML += `
     <div class="dish">
-      <strong>${l}</strong>
-      <input type="number" min="0" placeholder="Qty" id="dish_${l}">
+      <strong>${letter}</strong>
+      <input type="number" min="0" placeholder="Qty" id="dish_${letter}">
     </div>`;
 }
 
 function submitForm() {
   const date = document.getElementById("date").value;
+  const role = document.getElementById("role").value;
   const comment = document.getElementById("comment").value;
 
-  const selectedEmployees = [...document.querySelectorAll('#employees input:checked')]
+  const selectedEmployees = [...document.querySelectorAll(".employees input:checked")]
     .map(e => e.value);
 
-  if (!date || selectedEmployees.length === 0) {
-    alert("Please select date and at least one employee");
-    return;
-  }
-
   let dishes = [];
-  for (let i=65;i<=90;i++) {
+  for (let i = 65; i <= 90; i++) {
     const l = String.fromCharCode(i);
     const qty = document.getElementById(`dish_${l}`).value;
     if (qty && qty > 0) dishes.push(`${l}:${qty}`);
   }
 
-  fetch(API_URL, {
-    method:"POST",
-    body:JSON.stringify({
+  if (!date || selectedEmployees.length === 0 || dishes.length === 0) {
+    alert("Please fill date, employees and at least one dish");
+    return;
+  }
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
       date,
-      employees:selectedEmployees.join(", "),
-      dishes:dishes.join(" | "),
+      employees: selectedEmployees,
+      dishes: dishes.join(" | "),
+      role,
       comment
     })
-  }).then(() => {
-    document.getElementById("success").style.display="block";
-    setTimeout(()=>location.reload(),1200);
-  });
+  })
+  .then(() => alert("Saved successfully"))
+  .catch(() => alert("Error saving data"));
 }
 </script>
 </body>
