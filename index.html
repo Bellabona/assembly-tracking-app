@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Assembly Tracking</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>Bella&Bona Assembly Tracking</title>
 
 <style>
 body {
-  font-family: system-ui, Arial, sans-serif;
-  background: #f3f4f6;
-  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f6f6f6;
   padding: 16px;
 }
 
 .card {
-  max-width: 560px;
+  max-width: 420px;
   margin: auto;
-  background: #fff;
+  background: white;
   padding: 20px;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.12);
-}
-
-.logo {
-  display: block;
-  max-width: 170px;
-  margin: 0 auto 10px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 
 h1 {
   text-align: center;
-  margin: 6px 0 14px;
+  margin-bottom: 8px;
 }
 
-.instructions {
-  background: #f8fafc;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 14px;
-  margin-bottom: 16px;
+.logo {
+  display: block;
+  margin: 0 auto 12px;
+  max-width: 160px;
 }
 
 label {
@@ -47,194 +39,140 @@ label {
   margin-top: 14px;
 }
 
-input, textarea {
+input, select, textarea {
   width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  padding: 10px;
   margin-top: 6px;
-}
-
-textarea {
-  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
 .employees {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-.emp {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f3f4f6;
-  padding: 10px;
-  border-radius: 10px;
+.employees label {
+  font-weight: normal;
 }
 
 .dishes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .dish {
-  border: 2px solid #6b46c1;
-  border-radius: 12px;
+  border: 1px solid #ccc;
   padding: 8px;
-  text-align: center;
-}
-
-.dish button {
-  width: 100%;
-  padding: 12px 0;
-  font-size: 18px;
-  font-weight: 700;
-  border: none;
-  background: #f3f4f6;
   border-radius: 8px;
-}
-
-.dish button.active {
-  background: #6b46c1;
-  color: #fff;
-}
-
-.qty {
-  display: none;
-  margin-top: 6px;
-}
-
-.qty input {
-  padding: 6px;
-  font-size: 14px;
   text-align: center;
 }
 
-.submit-btn {
-  margin-top: 22px;
+button {
+  margin-top: 20px;
   width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  border-radius: 14px;
-  border: none;
-  background: #6b46c1;
+  padding: 14px;
+  font-size: 16px;
+  background: #6b3fbf;
   color: white;
+  border: none;
+  border-radius: 10px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="card">
-  <img src="https://bellabona.com/hubfs/logo-bellabona.svg" class="logo">
 
-  <h1>Assembly Tracking</h1>
+<img class="logo" src="https://bellabona.com/hubfs/logo-bellabona.svg" />
 
-  <div class="instructions">
-    1. Select date<br>
-    2. Tick all employees who worked together<br>
-    3. Select dishes (A–Z) and quantities<br>
-    4. Submit
-  </div>
+<h1>Assembly Tracking</h1>
 
-  <form id="form">
+<p>
+1. Select date<br>
+2. Tick all employees<br>
+3. Enter dishes + quantities<br>
+4. Submit
+</p>
 
-    <label>Date</label>
-    <input type="date" id="date" required>
+<form id="form">
 
-    <label>Employees</label>
-    <div class="employees" id="employees">
-      <div class="emp"><input type="checkbox" value="Joel"> Joel</div>
-      <div class="emp"><input type="checkbox" value="Richa"> Richa</div>
-      <div class="emp"><input type="checkbox" value="Jash"> Jash</div>
-      <div class="emp"><input type="checkbox" value="Hamid"> Hamid</div>
-      <div class="emp"><input type="checkbox" value="Varush"> Varush</div>
-      <div class="emp"><input type="checkbox" value="Ranjith"> Ranjith</div>
-      <div class="emp"><input type="checkbox" value="Salman"> Salman</div>
-    </div>
+<label>Date</label>
+<input type="date" id="date" required />
 
-    <label>Dishes (A–Z)</label>
-    <div class="dishes" id="dishes"></div>
+<label>Employees</label>
+<div class="employees">
+<label><input type="checkbox" value="Joel"> Joel</label>
+<label><input type="checkbox" value="Richa"> Richa</label>
+<label><input type="checkbox" value="Jash"> Jash</label>
+<label><input type="checkbox" value="Hamid"> Hamid</label>
+<label><input type="checkbox" value="Varush"> Varush</label>
+<label><input type="checkbox" value="Salman"> Salman</label>
+</div>
 
-    <label>Comment (optional)</label>
-    <textarea id="comment" rows="3"></textarea>
+<label>Dishes (A–Z) + Quantity</label>
+<div class="dishes" id="dishes"></div>
 
-    <button class="submit-btn" type="submit">Submit</button>
+<label>Role</label>
+<select id="role">
+<option>Main</option>
+<option>Assist</option>
+<option>Support</option>
+</select>
 
-  </form>
+<label>Comment (optional)</label>
+<textarea id="comment"></textarea>
+
+<button type="submit">Submit</button>
+
+</form>
 </div>
 
 <script>
-const scriptURL =
-  "https://script.google.com/macros/s/AKfycbw3W1NNlbP9cuT9pc-JP8qY4sQWb19Izv9_9eWg2R1-kvsQsDTqdCfMCBSC2KwkRPe29w/exec";
+const dishContainer = document.getElementById("dishes");
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-date.valueAsDate = new Date();
+letters.forEach(l => {
+  dishContainer.innerHTML += `
+    <div class="dish">
+      <strong>${l}</strong><br>
+      <input type="number" min="0" placeholder="Qty" data-letter="${l}">
+    </div>`;
+});
 
-// A–Z dishes
-for (let i = 65; i <= 90; i++) {
-  const letter = String.fromCharCode(i);
-
-  const wrap = document.createElement("div");
-  wrap.className = "dish";
-
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.textContent = letter;
-
-  const qty = document.createElement("div");
-  qty.className = "qty";
-  qty.innerHTML = '<input type="number" min="1" placeholder="Qty">';
-
-  btn.onclick = () => {
-    btn.classList.toggle("active");
-    qty.style.display = btn.classList.contains("active") ? "block" : "none";
-    if (!btn.classList.contains("active")) qty.querySelector("input").value = "";
-  };
-
-  wrap.append(btn, qty);
-  dishes.appendChild(wrap);
-}
-
-form.addEventListener("submit", e => {
+document.getElementById("form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const employees = [...document.querySelectorAll("#employees input:checked")]
+  const employees = [...document.querySelectorAll(".employees input:checked")]
     .map(e => e.value);
 
-  if (!employees.length) return alert("Select at least one employee");
+  if (employees.length === 0) {
+    alert("Select at least one employee");
+    return;
+  }
 
-  const dishesData = [];
-  document.querySelectorAll(".dish").forEach(d => {
-    const b = d.querySelector("button");
-    if (b.classList.contains("active")) {
-      const q = d.querySelector("input").value;
-      if (!q) return alert("Enter quantity for " + b.textContent);
-      dishesData.push(b.textContent + ":" + q);
-    }
-  });
+  const dishes = [...document.querySelectorAll(".dishes input")]
+    .filter(i => i.value > 0)
+    .map(i => `${i.dataset.letter}:${i.value}`)
+    .join(" | ");
 
-  if (!dishesData.length) return alert("Select at least one dish");
+  const payload = {
+    date: document.getElementById("date").value,
+    employees,
+    dishes,
+    role: document.getElementById("role").value,
+    comment: document.getElementById("comment").value
+  };
 
-  fetch(scriptURL, {
+  await fetch("PASTE_YOUR_APPS_SCRIPT_URL_HERE", {
     method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      date: date.value,
-      employees: employees.join(", "),
-      dishes: dishesData.join(" | "),
-      comment: comment.value
-    })
+    body: JSON.stringify(payload)
   });
 
-  alert("Saved ✔");
-  location.reload();
+  alert("Saved");
+  e.target.reset();
 });
 </script>
 
