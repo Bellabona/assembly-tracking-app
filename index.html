@@ -23,19 +23,10 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 10px;
-    }
+    .logo { text-align: center; margin-bottom: 10px; }
+    .logo img { height: 48px; }
 
-    .logo img {
-      height: 48px;
-    }
-
-    h1 {
-      text-align: center;
-      margin: 10px 0;
-    }
+    h1 { text-align: center; margin: 10px 0; }
 
     .instructions {
       background: #eef3ff;
@@ -69,17 +60,9 @@
       border-color: #6a3dbf;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
+    textarea { resize: vertical; min-height: 80px; }
 
-    /* ── Employee rows ── */
-    .employees {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .employees { display: flex; flex-direction: column; gap: 6px; }
 
     .employee-row {
       display: flex;
@@ -93,30 +76,15 @@
       user-select: none;
     }
 
-    .employee-row:hover {
-      border-color: #c4b0f0;
-      background: #f9f7ff;
-    }
-
-    .employee-row.checked {
-      border-color: #6a3dbf;
-      background: #f3eeff;
-    }
-
-    .employee-row span {
-      font-size: 16px;
-      font-weight: 500;
-    }
-
+    .employee-row:hover { border-color: #c4b0f0; background: #f9f7ff; }
+    .employee-row.checked { border-color: #6a3dbf; background: #f3eeff; }
+    .employee-row span { font-size: 16px; font-weight: 500; }
     .employee-row input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
       accent-color: #6a3dbf;
-      cursor: pointer;
-      flex-shrink: 0;
+      cursor: pointer; flex-shrink: 0;
     }
 
-    /* ── Dish grid ── */
     .dishes {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -133,21 +101,9 @@
       transition: all 0.15s ease;
     }
 
-    .dish.has-value {
-      background: #f3eeff;
-      border-color: #6a3dbf;
-    }
-
-    .dish strong {
-      display: block;
-      margin-bottom: 2px;
-      font-size: 15px;
-      color: #333;
-    }
-
-    .dish.has-value strong {
-      color: #6a3dbf;
-    }
+    .dish.has-value { background: #f3eeff; border-color: #6a3dbf; }
+    .dish strong { display: block; margin-bottom: 2px; font-size: 15px; color: #333; }
+    .dish.has-value strong { color: #6a3dbf; }
 
     .dish .dish-name {
       display: block;
@@ -162,9 +118,7 @@
       -webkit-box-orient: vertical;
     }
 
-    .dish.has-value .dish-name {
-      color: #7a4dcf;
-    }
+    .dish.has-value .dish-name { color: #7a4dcf; }
 
     .dish input[type="number"] {
       width: 100%;
@@ -176,18 +130,10 @@
       background: white;
     }
 
-    .dish input[type="number"]:focus {
-      outline: none;
-      border-color: #6a3dbf;
-    }
-
-    /* hide number spinners */
+    .dish input[type="number"]:focus { outline: none; border-color: #6a3dbf; }
     .dish input[type="number"]::-webkit-inner-spin-button,
-    .dish input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-    }
+    .dish input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-    /* ── Submit button ── */
     button#submitBtn {
       margin-top: 20px;
       width: 100%;
@@ -202,20 +148,10 @@
       transition: background 0.2s, transform 0.1s;
     }
 
-    button#submitBtn:hover:not(:disabled) {
-      background: #5a2faa;
-    }
+    button#submitBtn:hover:not(:disabled) { background: #5a2faa; }
+    button#submitBtn:active:not(:disabled) { transform: scale(0.98); }
+    button#submitBtn:disabled { background: #a589d8; cursor: not-allowed; }
 
-    button#submitBtn:active:not(:disabled) {
-      transform: scale(0.98);
-    }
-
-    button#submitBtn:disabled {
-      background: #a589d8;
-      cursor: not-allowed;
-    }
-
-    /* ── Validation error ── */
     .error-msg {
       display: none;
       background: #fff0f0;
@@ -227,9 +163,7 @@
       margin-top: 12px;
     }
 
-    .error-msg.visible {
-      display: block;
-    }
+    .error-msg.visible { display: block; }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -241,7 +175,6 @@
 
     .shake { animation: shake 0.35s ease; }
 
-    /* ── Success overlay ── */
     .success-banner {
       display: none;
       text-align: center;
@@ -249,29 +182,16 @@
       animation: fadeIn 0.3s ease;
     }
 
-    .success-banner.visible {
-      display: block;
-    }
+    .success-banner.visible { display: block; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .success-icon {
-      font-size: 52px;
-      margin-bottom: 10px;
-    }
-
-    .success-banner h2 {
-      color: #2d8a4e;
-      margin: 0 0 8px;
-    }
-
-    .success-banner p {
-      color: #666;
-      margin: 0 0 20px;
-    }
+    .success-icon { font-size: 52px; margin-bottom: 10px; }
+    .success-banner h2 { color: #2d8a4e; margin: 0 0 8px; }
+    .success-banner p { color: #666; margin: 0 0 20px; }
 
     .btn-again {
       display: inline-block;
@@ -285,9 +205,7 @@
       cursor: pointer;
     }
 
-    .btn-again:hover {
-      background: #5a2faa;
-    }
+    .btn-again:hover { background: #5a2faa; }
   </style>
 </head>
 <body>
@@ -297,7 +215,6 @@
     </div>
     <h1>Assembly Tracking</h1>
 
-    <!-- Main form -->
     <div id="formSection">
       <div class="instructions">
         1. Select date<br>
@@ -326,11 +243,9 @@
       <textarea id="comment" placeholder="Any notes about this session…"></textarea>
 
       <div class="error-msg" id="errorMsg"></div>
-
       <button id="submitBtn" onclick="submitForm()">Submit</button>
     </div>
 
-    <!-- Success screen -->
     <div class="success-banner" id="successBanner">
       <div class="success-icon">✅</div>
       <h2>Saved successfully!</h2>
@@ -344,7 +259,7 @@
 
     const EMPLOYEES = [
       "Joel","Jash","Varush","Richa","Hamid",
-      "Salman","Ranjith","Sreekanth"
+      "Salman","Ranjith","Sreekanth","Anny","Manisha"
     ];
 
     // ── Dish names for Berlin (week 30.03–03.04) ─────────────
@@ -378,7 +293,6 @@
       Z: "Hungarian Goulash with Bandnudeln"
     };
 
-    // ── Build employee rows ──────────────────────────
     const empBox = document.getElementById("employees");
     EMPLOYEES.forEach(name => {
       const row = document.createElement("div");
@@ -395,7 +309,6 @@
       empBox.appendChild(row);
     });
 
-    // ── Build dish grid ────────────────────────────
     const dishBox = document.getElementById("dishes");
     for (let i = 65; i <= 90; i++) {
       const letter = String.fromCharCode(i);
@@ -414,7 +327,6 @@
       dishBox.appendChild(div);
     }
 
-    // ── Auto-fill today's date ───────────────────────
     function getTodayLocal() {
       const d = new Date();
       const yyyy = d.getFullYear();
@@ -424,7 +336,6 @@
     }
     document.getElementById("date").value = getTodayLocal();
 
-    // ── Show error ───────────────────────────────
     function showError(msg) {
       const el = document.getElementById("errorMsg");
       el.textContent = msg;
@@ -436,14 +347,11 @@
     }
 
     function clearError() {
-      const el = document.getElementById("errorMsg");
-      el.classList.remove("visible");
+      document.getElementById("errorMsg").classList.remove("visible");
     }
 
-    // ── Submit ───────────────────────────────────
     function submitForm() {
       clearError();
-
       const date = document.getElementById("date").value;
       const role = document.getElementById("role").value;
       const comment = document.getElementById("comment").value.trim();
@@ -485,7 +393,6 @@
       });
     }
 
-    // ── Reset form ────────────────────────────────
     function resetForm() {
       EMPLOYEES.forEach(name => {
         const cb = document.getElementById(`emp_${name}`);
