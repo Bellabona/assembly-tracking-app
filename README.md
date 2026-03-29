@@ -45,7 +45,7 @@ Edit the `EMPLOYEES` array near the top of `index.html`:
 ```js
 const EMPLOYEES = [
   "Joel", "Jash", "Varush", "Richa", "Hamid",
-  "Salman", "Ranjith", "Sreekanth"
+  "Salman", "Ranjith", "Sreekanth", "Anny", "Alfiya", "Manisha"
 ];
 ```
 
