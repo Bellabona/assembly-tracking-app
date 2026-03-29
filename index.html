@@ -1,203 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bellabona – Assembly Tracking</title>
-
-<style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f6f7fb;
-  margin: 0;
-  padding: 16px;
-}
-
-.card {
-  max-width: 520px;
-  margin: auto;
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-.logo {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.logo img {
-  height: 48px;
-}
-
-h1 {
-  text-align: center;
-  margin: 10px 0;
-}
-
-.instructions {
-  background: #eef3ff;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-label {
-  font-weight: 600;
-  display: block;
-  margin-top: 16px;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 16px;
-  margin-top: 6px;
-}
-
-.employees {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.employees label {
-  font-weight: normal;
-}
-
-.dishes {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.dish {
-  background: #f1f3f9;
-  border-radius: 12px;
-  padding: 10px;
-  text-align: center;
-}
-
-.dish strong {
-  display: block;
-  margin-bottom: 6px;
-}
-
-button {
-  margin-top: 20px;
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  background: #6a3dbf;
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bellabona – Assembly Tracking</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      padding: 16px;
+    }
+    .card {
+      max-width: 520px;
+      margin: auto;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .logo { text-align: center; margin-bottom: 10px; }
+    .logo img { height: 48px; }
+    h1 { text-align: center; margin: 10px 0; }
+    .instructions {
+      background: #eef3ff;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+    .field-label {
+      font-weight: 600;
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    input[type="date"], select, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+    input[type="date"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #6a3dbf;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .employees { display: flex; flex-direction: column; gap: 6px; }
+    .employee-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #eee;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .employee-row:hover { border-color: #c4b0f0; background: #f9f7ff; }
+    .employee-row.checked { border-color: #6a3dbf; background: #f3eeff; }
+    .employee-row span { font-size: 16px; font-weight: 500; }
+    .employee-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #6a3dbf;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .dishes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .dish {
+      background: #f1f3f9;
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .dish.has-value { background: #f3eeff; border-color: #6a3dbf; }
+    .dish strong { display: block; margin-bottom: 4px; font-size: 15px; color: #333; }
+    .dish.has-value strong { color: #6a3dbf; }
+    .dish input[type="number"] {
+      width: 100%;
+      padding: 6px 4px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+      text-align: center;
+      background: white;
+    }
+    .dish input[type="number"]:focus { outline: none; border-color: #6a3dbf; }
+    .dish input[type="number"]::-webkit-inner-spin-button,
+    .dish input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    button#submitBtn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: #6a3dbf;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button#submitBtn:hover:not(:disabled) { background: #5a2faa; }
+    button#submitBtn:active:not(:disabled) { transform: scale(0.98); }
+    button#submitBtn:disabled { background: #a589d8; cursor: not-allowed; }
+    .error-msg {
+      display: none;
+      background: #fff0f0;
+      color: #cc3333;
+      border: 1px solid #ffcccc;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    .error-msg.visible { display: block; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-6px); }
+      40%       { transform: translateX(6px); }
+      60%       { transform: translateX(-4px); }
+      80%       { transform: translateX(4px); }
+    }
+    .shake { animation: shake 0.35s ease; }
+    .success-banner {
+      display: none;
+      text-align: center;
+      padding: 28px 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    .success-banner.visible { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .success-icon { font-size: 52px; margin-bottom: 10px; }
+    .success-banner h2 { color: #2d8a4e; margin: 0 0 8px; }
+    .success-banner p { color: #666; margin: 0 0 20px; font-size: 14px; word-break: break-word; }
+    .btn-again {
+      display: inline-block;
+      padding: 12px 28px;
+      background: #6a3dbf;
+      color: white;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-again:hover { background: #5a2faa; }
+  </style>
 </head>
-
 <body>
-<div class="card">
+  <div class="card">
+    <div class="logo">
+      <img src="https://bellabona.com/hubfs/logo-bellabona.svg" alt="Bellabona">
+    </div>
+    <h1>Assembly Tracking</h1>
 
-<div class="logo">
-  <img src="https://bellabona.com/hubfs/logo-bellabona.svg">
-</div>
+    <div id="formSection">
+      <div class="instructions">
+        1. Select date<br>
+        2. Tick all employees who worked together<br>
+        3. Enter dish letters (A–Z) and quantities<br>
+        4. Submit (you can submit multiple times per day)
+      </div>
 
-<h1>Assembly Tracking</h1>
+      <span class="field-label">Date</span>
+      <input type="date" id="date">
 
-<div class="instructions">
-1. Select date<br>
-2. Tick all employees who worked together<br>
-3. Enter dish letters (A–Z) and quantities<br>
-4. Submit (you can submit multiple times per day)
-</div>
+      <span class="field-label">Employees</span>
+      <div class="employees" id="employees"></div>
 
-<label>Date</label>
-<input type="date" id="date">
+      <span class="field-label">Dishes (A–Z) + Quantity</span>
+      <div class="dishes" id="dishes"></div>
 
-<label>Employees</label>
-<div class="employees" id="employees"></div>
+      <span class="field-label">Role</span>
+      <select id="role">
+        <option>Main</option>
+        <option>Assist</option>
+        <option>Support</option>
+      </select>
 
-<label>Dishes (A–Z) + Quantity</label>
-<div class="dishes" id="dishes"></div>
+      <span class="field-label">Comment (optional)</span>
+      <textarea id="comment" placeholder="Any notes about this session…"></textarea>
 
-<label>Role</label>
-<select id="role">
-  <option>Main</option>
-  <option>Assist</option>
-  <option>Support</option>
-</select>
+      <div class="error-msg" id="errorMsg"></div>
+      <button id="submitBtn" onclick="submitForm()">Submit</button>
+    </div>
 
-<label>Comment (optional)</label>
-<textarea id="comment"></textarea>
+    <div class="success-banner" id="successBanner">
+      <div class="success-icon">✅</div>
+      <h2>Saved successfully!</h2>
+      <p id="successDetail"></p>
+      <button class="btn-again" onclick="resetForm()">Submit another entry</button>
+    </div>
+  </div>
 
-<button onclick="submitForm()">Submit</button>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+    const EMPLOYEES = ["Joel","Jash","Varush","Richa","Hamid","Salman","Ranjith","Sreekanth"];
 
-</div>
+    const empBox = document.getElementById("employees");
+    EMPLOYEES.forEach(name => {
+      const row = document.createElement("div");
+      row.className = "employee-row";
+      row.innerHTML = `<span>${name}</span><input type="checkbox" value="${name}" id="emp_${name}">`;
+      row.addEventListener("click", (e) => {
+        const cb = row.querySelector("input");
+        if (e.target !== cb) cb.checked = !cb.checked;
+        row.classList.toggle("checked", cb.checked);
+      });
+      empBox.appendChild(row);
+    });
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+    const dishBox = document.getElementById("dishes");
+    for (let i = 65; i <= 90; i++) {
+      const letter = String.fromCharCode(i);
+      const div = document.createElement("div");
+      div.className = "dish";
+      div.id = `dishTile_${letter}`;
+      div.innerHTML = `<strong>${letter}</strong><input type="number" min="0" placeholder="Qty" id="dish_${letter}">`;
+      const inp = div.querySelector("input");
+      inp.addEventListener("input", () => { div.classList.toggle("has-value", inp.value > 0); });
+      dishBox.appendChild(div);
+    }
 
-const employees = [
-  "Joel","Jash","Varush","Richa","Hamid",
-  "Salman","Ranjith","Sreekanth"
-];
+    function getTodayLocal() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+    document.getElementById("date").value = getTodayLocal();
 
-const empBox = document.getElementById("employees");
-employees.forEach(n => {
-  empBox.innerHTML += `<label><input type="checkbox" value="${n}"> ${n}</label>`;
-});
+    function showError(msg) {
+      const el = document.getElementById("errorMsg");
+      el.textContent = msg;
+      el.classList.add("visible");
+      el.classList.remove("shake");
+      void el.offsetWidth;
+      el.classList.add("shake");
+      setTimeout(() => el.classList.remove("shake"), 400);
+    }
+    function clearError() { document.getElementById("errorMsg").classList.remove("visible"); }
 
-const dishBox = document.getElementById("dishes");
-for (let i = 65; i <= 90; i++) {
-  const letter = String.fromCharCode(i);
-  dishBox.innerHTML += `
-    <div class="dish">
-      <strong>${letter}</strong>
-      <input type="number" min="0" placeholder="Qty" id="dish_${letter}">
-    </div>`;
-}
+    function submitForm() {
+      clearError();
+      const date = document.getElementById("date").value;
+      const role = document.getElementById("role").value;
+      const comment = document.getElementById("comment").value.trim();
+      const selectedEmployees = EMPLOYEES.filter(n => { const cb = document.getElementById(`emp_${n}`); return cb && cb.checked; });
+      let dishes = [];
+      for (let i = 65; i <= 90; i++) {
+        const l = String.fromCharCode(i);
+        const qty = parseInt(document.getElementById(`dish_${l}`).value, 10);
+        if (qty > 0) dishes.push(`${l}:${qty}`);
+      }
+      if (!date) { showError("⚠️ Please select a date."); return; }
+      if (selectedEmployees.length === 0) { showError("⚠️ Please tick at least one employee."); return; }
+      if (dishes.length === 0) { showError("⚠️ Please enter a quantity for at least one dish."); return; }
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role, comment })
+      })
+      .then(() => {
+        document.getElementById("successDetail").textContent = `${date} · ${selectedEmployees.join(", ")} · ${dishes.join(" | ")} · ${role}`;
+        document.getElementById("formSection").style.display = "none";
+        document.getElementById("successBanner").classList.add("visible");
+      })
+      .catch(() => {
+        showError("❌ Could not save. Check your connection and try again.");
+        btn.disabled = false;
+        btn.textContent = "Submit";
+      });
+    }
 
-function submitForm() {
-  const date = document.getElementById("date").value;
-  const role = document.getElementById("role").value;
-  const comment = document.getElementById("comment").value;
-
-  const selectedEmployees = [...document.querySelectorAll(".employees input:checked")]
-    .map(e => e.value);
-
-  let dishes = [];
-  for (let i = 65; i <= 90; i++) {
-    const l = String.fromCharCode(i);
-    const qty = document.getElementById(`dish_${l}`).value;
-    if (qty && qty > 0) dishes.push(`${l}:${qty}`);
-  }
-
-  if (!date || selectedEmployees.length === 0 || dishes.length === 0) {
-    alert("Please fill date, employees and at least one dish");
-    return;
-  }
-
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      date,
-      employees: selectedEmployees,
-      dishes: dishes.join(" | "),
-      role,
-      comment
-    })
-  })
-  .then(() => alert("Saved successfully"))
-  .catch(() => alert("Error saving data"));
-}
-</script>
+    function resetForm() {
+      EMPLOYEES.forEach(name => {
+        const cb = document.getElementById(`emp_${name}`);
+        if (cb) cb.checked = false;
+        const row = cb ? cb.closest(".employee-row") : null;
+        if (row) row.classList.remove("checked");
+      });
+      for (let i = 65; i <= 90; i++) {
+        const l = String.fromCharCode(i);
+        const inp = document.getElementById(`dish_${l}`);
+        const tile = document.getElementById(`dishTile_${l}`);
+        if (inp) inp.value = "";
+        if (tile) tile.classList.remove("has-value");
+      }
+      document.getElementById("comment").value = "";
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = false;
+      btn.textContent = "Submit";
+      document.getElementById("successBanner").classList.remove("visible");
+      document.getElementById("formSection").style.display = "";
+      clearError();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  </script>
 </body>
 </html>
-
