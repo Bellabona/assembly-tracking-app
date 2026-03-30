@@ -1,421 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bellabona – Assembly Tracking</title>
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f6f7fb;
-      margin: 0;
-      padding: 16px;
-    }
-
-    .card {
-      max-width: 520px;
-      margin: auto;
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    .logo { text-align: center; margin-bottom: 10px; }
-    .logo img { height: 48px; }
-
-    h1 { text-align: center; margin: 10px 0; }
-
-    .instructions {
-      background: #eef3ff;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      margin-bottom: 16px;
-      line-height: 1.7;
-    }
-
-    .field-label {
-      font-weight: 600;
-      display: block;
-      margin-top: 18px;
-      margin-bottom: 8px;
-      font-size: 15px;
-    }
-
-    input[type="date"], select, textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 16px;
-      background: white;
-      transition: border-color 0.2s;
-    }
-
-    input[type="date"]:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #6a3dbf;
-    }
-
-    textarea { resize: vertical; min-height: 80px; }
-
-    .employees { display: flex; flex-direction: column; gap: 6px; }
-
-    .employee-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 2px solid #eee;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .employee-row:hover { border-color: #c4b0f0; background: #f9f7ff; }
-    .employee-row.checked { border-color: #6a3dbf; background: #f3eeff; }
-    .employee-row span { font-size: 16px; font-weight: 500; }
-    .employee-row input[type="checkbox"] {
-      width: 20px; height: 20px;
-      accent-color: #6a3dbf;
-      cursor: pointer; flex-shrink: 0;
-    }
-
-    .dishes {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .dish {
-      background: #f1f3f9;
-      border-radius: 12px;
-      padding: 8px 6px;
-      text-align: center;
-      border: 2px solid transparent;
-      transition: all 0.15s ease;
-    }
-
-    .dish.has-value { background: #f3eeff; border-color: #6a3dbf; }
-    .dish strong { display: block; margin-bottom: 2px; font-size: 15px; color: #333; }
-    .dish.has-value strong { color: #6a3dbf; }
-
-    .dish .dish-name {
-      display: block;
-      font-size: 9px;
-      color: #888;
-      margin-bottom: 5px;
-      line-height: 1.2;
-      min-height: 22px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .dish.has-value .dish-name { color: #7a4dcf; }
-
-    .dish input[type="number"] {
-      width: 100%;
-      padding: 6px 4px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      font-size: 15px;
-      text-align: center;
-      background: white;
-    }
-
-    .dish input[type="number"]:focus { outline: none; border-color: #6a3dbf; }
-    .dish input[type="number"]::-webkit-inner-spin-button,
-    .dish input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-    button#submitBtn {
-      margin-top: 20px;
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      background: #6a3dbf;
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    button#submitBtn:hover:not(:disabled) { background: #5a2faa; }
-    button#submitBtn:active:not(:disabled) { transform: scale(0.98); }
-    button#submitBtn:disabled { background: #a589d8; cursor: not-allowed; }
-
-    .error-msg {
-      display: none;
-      background: #fff0f0;
-      color: #cc3333;
-      border: 1px solid #ffcccc;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 14px;
-      margin-top: 12px;
-    }
-
-    .error-msg.visible { display: block; }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-6px); }
-      40%       { transform: translateX(6px); }
-      60%       { transform: translateX(-4px); }
-      80%       { transform: translateX(4px); }
-    }
-
-    .shake { animation: shake 0.35s ease; }
-
-    .success-banner {
-      display: none;
-      text-align: center;
-      padding: 28px 20px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .success-banner.visible { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .success-icon { font-size: 52px; margin-bottom: 10px; }
-    .success-banner h2 { color: #2d8a4e; margin: 0 0 8px; }
-    .success-banner p { color: #666; margin: 0 0 20px; }
-
-    .btn-again {
-      display: inline-block;
-      padding: 12px 28px;
-      background: #6a3dbf;
-      color: white;
-      border-radius: 12px;
-      border: none;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-again:hover { background: #5a2faa; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0d0d1a" />
+<title>BellaBona – Assembly</title>
+<style>
+:root{--bg:#0d0d1a;--surface:#161628;--surface2:#1e1e35;--border:#2a2a45;--accent:#7c4dff;--accent2:#a57dff;--green:#00c896;--text:#e8e8f4;--muted:#7070a0;--danger:#ff5c72}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--text);margin:0;min-height:100vh;padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden}
+.app-header{position:sticky;top:0;z-index:100;padding:14px 20px 12px;padding-top:calc(14px + env(safe-area-inset-top));background:rgba(13,13,26,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.header-logo{height:30px;filter:brightness(0) invert(1)}
+.header-right{text-align:right}
+.header-title{font-size:16px;font-weight:700;letter-spacing:-0.3px}
+.header-date{font-size:11px;color:var(--muted);margin-top:1px}
+.content{padding:16px 16px 130px;max-width:600px;margin:auto}
+.section-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.date-pill{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px}
+.date-pill .icon{font-size:18px}
+input[type="date"]{background:none;border:none;color:var(--text);font-size:16px;font-weight:600;flex:1;outline:none;cursor:pointer;color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(0.5);cursor:pointer}
+.emp-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.emp-scroll::-webkit-scrollbar{display:none}
+.emp-chip{flex-shrink:0;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:10px 12px;border-radius:16px;background:var(--surface);border:2px solid var(--border);transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1);position:relative;min-width:64px}
+.emp-chip .avatar{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--muted);transition:all 0.18s ease}
+.emp-chip .emp-name{font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color 0.18s}
+.emp-chip.checked{border-color:var(--accent);background:rgba(124,77,255,0.12);transform:scale(1.04)}
+.emp-chip.checked .avatar{background:var(--accent);color:white}
+.emp-chip.checked .emp-name{color:var(--accent2)}
+.check-badge{display:none;position:absolute;top:4px;right:4px;width:15px;height:15px;border-radius:50%;background:var(--green);font-size:8px;align-items:center;justify-content:center;color:white;font-weight:900}
+.emp-chip.checked .check-badge{display:flex}
+.dishes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dish{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:10px 5px 8px;text-align:center;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);position:relative;overflow:hidden}
+.dish::before{content:'';position:absolute;inset:0;border-radius:12px;background:radial-gradient(circle at 50% 0%,rgba(124,77,255,0.18),transparent 70%);opacity:0;transition:opacity 0.2s}
+.dish.has-value{border-color:var(--accent);background:rgba(124,77,255,0.1)}
+.dish.has-value::before{opacity:1}
+.dish .letter{font-size:17px;font-weight:800;color:var(--muted);line-height:1;margin-bottom:2px;transition:color 0.2s}
+.dish.has-value .letter{color:var(--accent2)}
+.dish .dish-name{font-size:8px;color:#505078;line-height:1.2;min-height:20px;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:color 0.2s}
+.dish.has-value .dish-name{color:#8888b8}
+.dish input[type="number"]{width:100%;padding:5px 2px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-weight:700;text-align:center;outline:none;transition:all 0.15s}
+.dish input[type="number"]:focus{border-color:var(--accent);background:rgba(124,77,255,0.1);box-shadow:0 0 0 3px rgba(124,77,255,0.15)}
+.dish input[type="number"]::-webkit-inner-spin-button,.dish input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none}
+.role-tabs{display:flex;gap:8px}
+.role-tab{flex:1;padding:10px 4px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none}
+.role-tab.active{border-color:var(--accent);background:rgba(124,77,255,0.15);color:var(--accent2)}
+textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;resize:none;min-height:68px;outline:none;font-family:inherit;transition:border-color 0.15s}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--muted)}
+.error-msg{display:none;margin-top:10px;background:rgba(255,92,114,0.1);color:var(--danger);border:1px solid rgba(255,92,114,0.25);border-radius:12px;padding:10px 14px;font-size:14px}
+.error-msg.visible{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake 0.35s ease}
+.submit-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(13,13,26,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border)}
+#submitBtn{width:100%;padding:15px;border-radius:16px;border:none;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:white;font-size:17px;font-weight:700;cursor:pointer;transition:all 0.15s ease;box-shadow:0 4px 20px rgba(124,77,255,0.35)}
+#submitBtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,77,255,0.45)}
+#submitBtn:active:not(:disabled){transform:scale(0.98)}
+#submitBtn:disabled{background:#22223a;color:#4a4a70;box-shadow:none;cursor:not-allowed}
+.success-screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;background:var(--bg);animation:fadeUp 0.4s ease}
+.success-screen.visible{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.success-ring{width:90px;height:90px;border-radius:50%;background:rgba(0,200,150,0.1);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:24px;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both}
+@keyframes pop{from{transform:scale(0.4);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:28px;font-weight:800;color:var(--green);margin-bottom:8px}
+.success-detail{font-size:13px;color:var(--muted);line-height:1.8;max-width:320px;margin:0 auto 32px}
+.success-detail span{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2px 8px;margin:2px;font-size:12px;color:var(--text)}
+.btn-again{padding:14px 36px;border-radius:16px;border:none;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:white;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(124,77,255,0.35);transition:all 0.15s}
+.btn-again:hover{transform:translateY(-1px)}
+</style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">
-      <img src="https://bellabona.com/hubfs/logo-bellabona.svg" alt="Bellabona">
-    </div>
-    <h1>Assembly Tracking</h1>
-
-    <div id="formSection">
-      <div class="instructions">
-        1. Select date<br>
-        2. Tick all employees who worked together<br>
-        3. Enter dish letters (A–Z) and quantities<br>
-        4. Submit (you can submit multiple times per day)
-      </div>
-
-      <span class="field-label">Date</span>
-      <input type="date" id="date">
-
-      <span class="field-label">Employees</span>
-      <div class="employees" id="employees"></div>
-
-      <span class="field-label">Dishes (A–Z) + Quantity</span>
-      <div class="dishes" id="dishes"></div>
-
-      <span class="field-label">Role</span>
-      <select id="role">
-        <option>Main</option>
-        <option>Assist</option>
-        <option>Support</option>
-      </select>
-
-      <span class="field-label">Comment (optional)</span>
-      <textarea id="comment" placeholder="Any notes about this session…"></textarea>
-
-      <div class="error-msg" id="errorMsg"></div>
-      <button id="submitBtn" onclick="submitForm()">Submit</button>
-    </div>
-
-    <div class="success-banner" id="successBanner">
-      <div class="success-icon">✅</div>
-      <h2>Saved successfully!</h2>
-      <p id="successDetail"></p>
-      <button class="btn-again" onclick="resetForm()">Submit another entry</button>
-    </div>
+<header class="app-header">
+  <img class="header-logo" src="https://bellabona.com/hubfs/logo-bellabona.svg" alt="BellaBona">
+  <div class="header-right">
+    <div class="header-title">Assembly Tracking</div>
+    <div class="header-date" id="headerDate"></div>
   </div>
-
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
-
-    const EMPLOYEES = [
-      "Joel","Jash","Varush","Richa","Hamid",
-      "Salman","Ranjith","Sreekanth","Anny","Manisha"
-    ];
-
-    // ── Dish names for Berlin (week 30.03–03.04) ───────────────────
-    // AUTO-UPDATED by weekly scheduled task — do not edit manually
-    const DISH_NAMES = {
-      A: "Indian Butter Chicken",
-      B: "Matar Paneer",
-      C: "Kofta Tikka Masala",
-      D: "Mexican Buddha Bowl",
-      E: "Thai coconut curry with chicken (XL)",
-      F: "Semmelknödel with Mushroom sauce",
-      G: "Mediterranean Salmon Bowl with Wild Rice",
-      H: "Vegetables Tikka Masala",
-      I: "Goat Cheese Harissa Salad",
-      J: "Lasagne Mushrooms with Seasonal Veggies",
-      K: "Test&Tell: High Protein Chicken Cobb Salad",
-      L: "Minestrone bockwurst with Rice",
-      M: "Mix-It-Yourself Penne Pesto Chicken",
-      N: "Garden Green Salad with Chicken",
-      O: "Chicken Laksa",
-      P: "Spicy Asparagus Omelette Salad",
-      Q: "Osaka Gyoza Bowl",
-      R: "Mediterranean Tuna Bowl",
-      S: "Cordon bleu with Leipziger & Mushroom Sauce",
-      T: "Club Sandwich",
-      U: "Far West Chili con Carne",
-      V: "Vegan Falafel Salad",
-      W: "Herakleio’s Vegan Pita Gyros",
-      X: "Thai chicken salad",
-      Y: "Pesto Mozzarella Pizza Sandwich",
-      Z: "Hungarian Goulash with Bandnudeln",
-    };
-
-    const empBox = document.getElementById("employees");
-    EMPLOYEES.forEach(name => {
-      const row = document.createElement("div");
-      row.className = "employee-row";
-      row.innerHTML = `
-        <span>${name}</span>
-        <input type="checkbox" value="${name}" id="emp_${name}">
-      `;
-      row.addEventListener("click", (e) => {
-        const cb = row.querySelector("input");
-        if (e.target !== cb) cb.checked = !cb.checked;
-        row.classList.toggle("checked", cb.checked);
-      });
-      empBox.appendChild(row);
-    });
-
-    const dishBox = document.getElementById("dishes");
-    for (let i = 65; i <= 90; i++) {
-      const letter = String.fromCharCode(i);
-      const div = document.createElement("div");
-      div.className = "dish";
-      div.id = `dishTile_${letter}`;
-      div.innerHTML = `
-        <strong>${letter}</strong>
-        <span class="dish-name">${DISH_NAMES[letter] || ""}</span>
-        <input type="number" min="0" placeholder="Qty" id="dish_${letter}">
-      `;
-      const inp = div.querySelector("input");
-      inp.addEventListener("input", () => {
-        div.classList.toggle("has-value", inp.value > 0);
-      });
-      dishBox.appendChild(div);
-    }
-
-    function getTodayLocal() {
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm   = String(d.getMonth() + 1).padStart(2, "0");
-      const dd   = String(d.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
-    }
-    document.getElementById("date").value = getTodayLocal();
-
-    function showError(msg) {
-      const el = document.getElementById("errorMsg");
-      el.textContent = msg;
-      el.classList.add("visible");
-      el.classList.remove("shake");
-      void el.offsetWidth;
-      el.classList.add("shake");
-      setTimeout(() => el.classList.remove("shake"), 400);
-    }
-
-    function clearError() {
-      document.getElementById("errorMsg").classList.remove("visible");
-    }
-
-    function submitForm() {
-      clearError();
-      const date = document.getElementById("date").value;
-      const role = document.getElementById("role").value;
-      const comment = document.getElementById("comment").value.trim();
-
-      const selectedEmployees = EMPLOYEES.filter(n => {
-        const cb = document.getElementById(`emp_${n}`);
-        return cb && cb.checked;
-      });
-
-      let dishes = [];
-      for (let i = 65; i <= 90; i++) {
-        const l = String.fromCharCode(i);
-        const qty = parseInt(document.getElementById(`dish_${l}`).value, 10);
-        if (qty > 0) dishes.push(`${l}:${qty}`);
-      }
-
-      if (!date) { showError("⚠️ Please select a date."); return; }
-      if (selectedEmployees.length === 0) { showError("⚠️ Please tick at least one employee."); return; }
-      if (dishes.length === 0) { showError("⚠️ Please enter a quantity for at least one dish."); return; }
-
-      const btn = document.getElementById("submitBtn");
-      btn.disabled = true;
-      btn.textContent = "Saving…";
-
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role, comment })
-      })
-      .then(() => {
-        const detail = `${date} · ${selectedEmployees.join(", ")} · ${dishes.join(" | ")} · ${role}`;
-        document.getElementById("successDetail").textContent = detail;
-        document.getElementById("formSection").style.display = "none";
-        document.getElementById("successBanner").classList.add("visible");
-      })
-      .catch(() => {
-        showError("❌ Could not save. Please check your connection and try again.");
-        btn.disabled = false;
-        btn.textContent = "Submit";
-      });
-    }
-
-    function resetForm() {
-      EMPLOYEES.forEach(name => {
-        const cb = document.getElementById(`emp_${name}`);
-        if (cb) cb.checked = false;
-        const row = cb ? cb.closest(".employee-row") : null;
-        if (row) row.classList.remove("checked");
-      });
-      for (let i = 65; i <= 90; i++) {
-        const l = String.fromCharCode(i);
-        const inp = document.getElementById(`dish_${l}`);
-        if (inp) inp.value = "";
-        const tile = document.getElementById(`dishTile_${l}`);
-        if (tile) tile.classList.remove("has-value");
-      }
-      document.getElementById("comment").value = "";
-      const btn = document.getElementById("submitBtn");
-      btn.disabled = false;
-      btn.textContent = "Submit";
-      document.getElementById("successBanner").classList.remove("visible");
-      document.getElementById("formSection").style.display = "";
-      clearError();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  </script>
+</header>
+<div class="content" id="formSection">
+  <div class="section-label">Date</div>
+  <div class="date-pill"><span class="icon">📅</span><input type="date" id="date"></div>
+  <div class="section-label">Team — tap to select</div>
+  <div class="emp-scroll" id="employees"></div>
+  <div class="section-label">Dishes assembled (A–Z)</div>
+  <div class="dishes" id="dishes"></div>
+  <div class="section-label">Role</div>
+  <div class="role-tabs">
+    <div class="role-tab active" data-role="Main">Main</div>
+    <div class="role-tab" data-role="Assist">Assist</div>
+    <div class="role-tab" data-role="Support">Support</div>
+  </div>
+  <div class="section-label">Comment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></div>
+  <textarea id="comment" placeholder="Any notes…" rows="2"></textarea>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+<div class="success-screen" id="successScreen">
+  <div class="success-ring">✓</div>
+  <div class="success-title">Saved!</div>
+  <div class="success-detail" id="successDetail"></div>
+  <button class="btn-again" onclick="resetForm()">+ New Entry</button>
+</div>
+<div class="submit-bar" id="submitBar">
+  <button id="submitBtn" onclick="submitForm()">Submit Entry</button>
+</div>
+<script>
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+const EMPLOYEES=["Joel","Jash","Varush","Richa","Hamid","Salman","Ranjith","Sreekanth","Anny","Manisha","Alfiya"];
+// AUTO-UPDATED by weekly scheduled task -- do not edit manually
+const DISH_NAMES={A:"Indian Butter Chicken",B:"Matar Paneer",C:"Kofta Tikka Masala",D:"Mexican Buddha Bowl",E:"Thai coconut curry with chicken (XL)",F:"Semmelknoedel with Mushroom sauce",G:"Mediterranean Salmon Bowl with Wild Rice",H:"Vegetables Tikka Masala",I:"Goat Cheese Harissa Salad",J:"Lasagne Mushrooms with Seasonal Veggies",K:"Test and Tell: High Protein Chicken Cobb Salad",L:"Minestrone bockwurst with Rice",M:"Mix-It-Yourself Penne Pesto Chicken",N:"Garden Green Salad with Chicken",O:"Chicken Laksa",P:"Spicy Asparagus Omelette Salad",Q:"Osaka Gyoza Bowl",R:"Mediterranean Tuna Bowl",S:"Cordon bleu with Leipziger and Mushroom Sauce",T:"Club Sandwich",U:"Far West Chili con Carne",V:"Vegan Falafel Salad",W:"Herakleios Vegan Pita Gyros",X:"Thai chicken salad",Y:"Pesto Mozzarella Pizza Sandwich",Z:"Hungarian Goulash with Bandnudeln"};
+(function(){const d=new Date();document.getElementById('headerDate').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});})();
+function getTodayLocal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+document.getElementById("date").value=getTodayLocal();
+const empBox=document.getElementById("employees");
+EMPLOYEES.forEach(name=>{const chip=document.createElement("div");chip.className="emp-chip";chip.dataset.name=name;chip.innerHTML='<div class="check-badge">✓</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';chip.addEventListener("click",()=>chip.classList.toggle("checked"));empBox.appendChild(chip);});
+const dishBox=document.getElementById("dishes");
+for(let i=65;i<=90;i++){const l=String.fromCharCode(i);const div=document.createElement("div");div.className="dish";div.id="tile_"+l;div.innerHTML='<div class="letter">'+l+'</div><div class="dish-name">'+(DISH_NAMES[l]||"")+'</div><input type="number" min="0" placeholder="0" id="dish_'+l+'">';const inp=div.querySelector("input");inp.addEventListener("input",()=>div.classList.toggle("has-value",parseFloat(inp.value)>0));dishBox.appendChild(div);}
+let selectedRole="Main";
+document.querySelectorAll(".role-tab").forEach(tab=>{tab.addEventListener("click",()=>{document.querySelectorAll(".role-tab").forEach(t=>t.classList.remove("active"));tab.classList.add("active");selectedRole=tab.dataset.role;});});
+function showError(msg){const el=document.getElementById("errorMsg");el.textContent=msg;el.classList.add("visible");el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake");setTimeout(()=>el.classList.remove("shake"),400);}
+function clearError(){document.getElementById("errorMsg").classList.remove("visible");}
+function submitForm(){
+  clearError();
+  const date=document.getElementById("date").value;
+  const comment=document.getElementById("comment").value.trim();
+  const sel=[...document.querySelectorAll(".emp-chip.checked")].map(c=>c.dataset.name);
+  let dishes=[];
+  for(let i=65;i<=90;i++){const l=String.fromCharCode(i);const q=parseFloat(document.getElementById("dish_"+l).value);if(q>0)dishes.push(l+":"+q);}
+  if(!date){showError("⚠️ Please select a date.");return;}
+  if(!sel.length){showError("⚠️ Please select at least one team member.");return;}
+  if(!dishes.length){showError("⚠️ Please enter a quantity for at least one dish.");return;}
+  const btn=document.getElementById("submitBtn");btn.disabled=true;btn.textContent="Saving…";
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({date,employees:sel,dishes:dishes.join(" | "),role:selectedRole,comment})})
+  .then(()=>{document.getElementById("successDetail").innerHTML=date+"<br>"+sel.map(n=>"<span>"+n+"</span>").join(' ')+"<br>"+dishes.map(d=>"<span>"+d+"</span>").join(' ')+"<br><span>"+selectedRole+"</span>";document.getElementById("formSection").style.display="none";document.getElementById("submitBar").style.display="none";document.getElementById("successScreen").classList.add("visible");})
+  .catch(()=>{showError("❌ Could not save. Check connection and try again.");btn.disabled=false;btn.textContent="Submit Entry";});
+}
+function resetForm(){
+  document.querySelectorAll(".emp-chip").forEach(c=>c.classList.remove("checked"));
+  for(let i=65;i<=90;i++){const l=String.fromCharCode(i);const inp=document.getElementById("dish_"+l);if(inp)inp.value="";const tile=document.getElementById("tile_"+l);if(tile)tile.classList.remove("has-value");}
+  document.getElementById("comment").value="";selectedRole="Main";
+  document.querySelectorAll(".role-tab").forEach(t=>t.classList.remove("active"));
+  document.querySelector('[data-role="Main"]').classList.add("active");
+  const btn=document.getElementById("submitBtn");btn.disabled=false;btn.textContent="Submit Entry";
+  document.getElementById("successScreen").classList.remove("visible");
+  document.getElementById("formSection").style.display="";
+  document.getElementById("submitBar").style.display="";
+  clearError();window.scrollTo({top:0,behavior:"smooth"});
+}
+</script>
 </body>
 </html>
