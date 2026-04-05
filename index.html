@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0d0d1a" />
-<title>BellaBona – Assembly</title>
+<title>BellaBona â Assembly</title>
 <style>
 :root {
   --bg:       #0d0d1a;
@@ -286,14 +286,14 @@ textarea::placeholder { color: var(--muted); }
 
   <div class="section-label">Date</div>
   <div class="date-pill">
-    <span class="icon">📅</span>
+    <span class="icon">ð</span>
     <input type="date" id="date">
   </div>
 
-  <div class="section-label">Team — tap to select</div>
+  <div class="section-label">Team â tap to select</div>
   <div class="emp-scroll" id="employees"></div>
 
-  <div class="section-label">Dishes assembled (A–Z)</div>
+  <div class="section-label">Dishes assembled (AâZ)</div>
   <div class="dishes" id="dishes"></div>
 
   <div class="section-label">Role</div>
@@ -304,14 +304,14 @@ textarea::placeholder { color: var(--muted); }
   </div>
 
   <div class="section-label">Comment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></div>
-  <textarea id="comment" placeholder="Any notes about this session…" rows="2"></textarea>
+  <textarea id="comment" placeholder="Any notes about this sessionâ¦" rows="2"></textarea>
 
   <div class="error-msg" id="errorMsg"></div>
 
 </div>
 
 <div class="success-screen" id="successScreen">
-  <div class="success-ring">✓</div>
+  <div class="success-ring">â</div>
   <div class="success-title">Saved!</div>
   <div class="success-detail" id="successDetail"></div>
   <button class="btn-again" onclick="resetForm()">+ New Entry</button>
@@ -330,35 +330,35 @@ const EMPLOYEES = [
 ];
 
 // ── Dish names for Berlin (week 30.03–03.04) ─────────────────
-// AUTO-UPDATED by weekly scheduled task — do not edit manually
-const DISH_NAMES = {
-  A: "Indian Butter Chicken",
-  B: "Matar Paneer",
-  C: "Kofta Tikka Masala",
-  D: "Mexican Buddha Bowl",
-  E: "Thai coconut curry with chicken (XL)",
-  F: "Semmelknödel with Mushroom sauce",
-  G: "Mediterranean Salmon Bowl with Wild Rice",
-  H: "Vegetables Tikka Masala",
-  I: "Goat Cheese Harissa Salad",
-  J: "Lasagne Mushrooms with Seasonal Veggies",
-  K: "Test&Tell: High Protein Chicken Cobb Salad",
-  L: "Minestrone bockwurst with Rice",
-  M: "Mix-It-Yourself Penne Pesto Chicken",
-  N: "Garden Green Salad with Chicken",
-  O: "Chicken Laksa",
-  P: "Spicy Asparagus Omelette Salad",
-  Q: "Osaka Gyoza Bowl",
-  R: "Mediterranean Tuna Bowl",
-  S: "Cordon bleu with Leipziger & Mushroom Sauce",
-  T: "Club Sandwich",
-  U: "Far West Chili con Carne",
-  V: "Vegan Falafel Salad",
-  W: "Herakleio's Vegan Pita Gyros",
-  X: "Thai chicken salad",
-  Y: "Pesto Mozzarella Pizza Sandwich",
-  Z: "Hungarian Goulash with Bandnudeln",
-};
+    // AUTO-UPDATED by weekly scheduled task — do not edit manually
+    const DISH_NAMES = {
+      A: "Indian Butter Chicken",
+      B: "Matar Paneer",
+      C: "Kofta Tikka Masala",
+      D: "Mexican Buddha Bowl",
+      E: "Thai coconut curry with chicken (XL)",
+      F: "Semmelknödel with Mushroom sauce",
+      G: "Mediterranean Salmon Bowl with Wild Rice",
+      H: "Vegetables Tikka Masala",
+      I: "Goat Cheese Harissa Salad",
+      J: "Lasagne Mushrooms with Seasonal Veggies",
+      K: "Test&Tell: High Protein Chicken Cobb Salad",
+      L: "Minestrone bockwurst with Rice",
+      M: "Mix-It-Yourself Penne Pesto Chicken",
+      N: "Garden Green Salad with Chicken",
+      O: "Chicken Laksa",
+      P: "Spicy Asparagus Omelette Salad",
+      Q: "Osaka Gyoza Bowl",
+      R: "Mediterranean Tuna Bowl",
+      S: "Cordon bleu with Leipziger & Mushroom Sauce",
+      T: "Club Sandwich",
+      U: "Far West Chili con Carne",
+      V: "Vegan Falafel Salad",
+      W: "Herakleio’s Vegan Pita Gyros",
+      X: "Thai chicken salad",
+      Y: "Pesto Mozzarella Pizza Sandwich",
+      Z: "Hungarian Goulash with Bandnudeln",
+    };
 
 (function() {
   const d = new Date();
@@ -377,7 +377,7 @@ EMPLOYEES.forEach(name => {
   const chip = document.createElement("div");
   chip.className = "emp-chip";
   chip.dataset.name = name;
-  chip.innerHTML = '<div class="check-badge">✓</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
+  chip.innerHTML = '<div class="check-badge">â</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
   chip.addEventListener("click", () => chip.classList.toggle("checked"));
   empBox.appendChild(chip);
 });
@@ -440,12 +440,12 @@ function submitForm() {
     const qty = parseFloat(document.getElementById("dish_"+l).value);
     if (qty > 0) dishes.push(l+":"+qty);
   }
-  if (!date) { showError("⚠️ Please select a date."); return; }
-  if (!selectedEmployees.length) { showError("⚠️ Please select at least one team member."); return; }
-  if (!dishes.length) { showError("⚠️ Please enter a quantity for at least one dish."); return; }
+  if (!date) { showError("â ï¸ Please select a date."); return; }
+  if (!selectedEmployees.length) { showError("â ï¸ Please select at least one team member."); return; }
+  if (!dishes.length) { showError("â ï¸ Please enter a quantity for at least one dish."); return; }
 
   const btn = document.getElementById("submitBtn");
-  btn.disabled = true; btn.textContent = "Saving…";
+  btn.disabled = true; btn.textContent = "Savingâ¦";
 
   fetch(SCRIPT_URL, {
     method: "POST",
@@ -459,7 +459,7 @@ function submitForm() {
     document.getElementById("successScreen").classList.add("visible");
   })
   .catch(() => {
-    showError("❌ Could not save. Check connection and try again.");
+    showError("â Could not save. Check connection and try again.");
     btn.disabled = false; btn.textContent = "Submit Entry";
   });
 }
