@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0d0d1a" />
-<title>BellaBona â Assembly</title>
+<title>BellaBona &#127837; Assembly</title>
 <style>
 :root {
  --bg:       #0d0d1a;
@@ -286,14 +286,14 @@ textarea::placeholder { color: var(--muted); }
 
   <div class="section-label">Date</div>
   <div class="date-pill">
-    <span class="icon">ð</span>
+    <span class="icon">&#128197;</span>
     <input type="date" id="date">
   </div>
 
-  <div class="section-label">Team â tap to select</div>
+  <div class="section-label">Team &#8212; tap to select</div>
   <div class="emp-scroll" id="employees"></div>
 
-  <div class="section-label">Dishes assembled (AâZ)</div>
+  <div class="section-label">Dishes assembled (A&#8211;Z)</div>
   <div class="dishes" id="dishes"></div>
 
   <div class="section-label">Role</div>
@@ -304,14 +304,14 @@ textarea::placeholder { color: var(--muted); }
   </div>
 
   <div class="section-label">Comment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></div>
-  <textarea id="comment" placeholder="Any notes about this sessionâ¦" rows="2"></textarea>
+  <textarea id="comment" placeholder="Any notes about this session&#8230;" rows="2"></textarea>
 
   <div class="error-msg" id="errorMsg"></div>
 
 </div>
 
 <div class="success-screen" id="successScreen">
-  <div class="success-ring">â</div>
+  <div class="success-ring">&#10003;</div>
   <div class="success-title">Saved!</div>
   <div class="success-detail" id="successDetail"></div>
   <button class="btn-again" onclick="resetForm()">+ New Entry</button>
@@ -329,7 +329,7 @@ const EMPLOYEES = [
   "Salman","Ranjith","Sreekanth","Anny","Manisha","Alfiya"
 ];
 
-    // ── Dish names for Berlin (week 06.04–10.04) ─────────────────
+    // ── Dish names for Berlin (week 06.04&#8211;10.04) ─────────────────
     // AUTO-UPDATED by weekly scheduled task — do not edit manually
     const DISH_NAMES = {
       A: "B&B Butter Chicken with Rice & Naan",
@@ -349,7 +349,7 @@ const EMPLOYEES = [
       O: "Japanese inspired vegan noodles bowl",
       P: "The Ultimate Vegan Bowl",
       Q: "Soleil de Saumon",
-      R: "Low Carb Döner-Teller",
+      R: "Low Carb D&#246;ner-Teller",
       S: "Spicy Tuna Poke Bowl",
       T: "Spicy Chicken Pizza Sandwich",
       U: "Zucchini Falafel Wrap",
@@ -377,7 +377,7 @@ EMPLOYEES.forEach(name => {
   const chip = document.createElement("div");
   chip.className = "emp-chip";
   chip.dataset.name = name;
-  chip.innerHTML = '<div class="check-badge">â</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
+  chip.innerHTML = '<div class="check-badge">&#10003;</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
   chip.addEventListener("click", () => chip.classList.toggle("checked"));
   empBox.appendChild(chip);
 });
@@ -440,15 +440,17 @@ function submitForm() {
     const qty = parseFloat(document.getElementById("dish_"+l).value);
     if (qty > 0) dishes.push(l+":"+qty);
   }
-  if (!date) { showError("â ï¸ Please select a date."); return; }
-  if (!selectedEmployees.length) { showError("â ï¸ Please select at least one team member."); return; }
-  if (!dishes.length) { showError("â ï¸ Please enter a quantity for at least one dish."); return; }
+  if (!date) { showError("&#9888;&#65039; Please select a date."); return; }
+  if (!selectedEmployees.length) { showError("&#9888;&#65039; Please select at least one team member."); return; }
+  if (!dishes.length) { showError("&#9888;&#65039; Please enter a quantity for at least one dish."); return; }
 
   const btn = document.getElementById("submitBtn");
-  btn.disabled = true; btn.textContent = "Savingâ¦";
+  btn.disabled = true; btn.textContent = "Saving&#8230;";
 
   fetch(SCRIPT_URL, {
     method: "POST",
+    redirect: "follow",
+    headers: {"Content-Type": "text/plain;charset=utf-8"},
     body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role: selectedRole, comment })
   })
   .then(() => {
@@ -459,7 +461,7 @@ function submitForm() {
     document.getElementById("successScreen").classList.add("visible");
   })
   .catch(() => {
-    showError("â Could not save. Check connection and try again.");
+    showError("&#10060; Could not save. Check connection and try again.");
     btn.disabled = false; btn.textContent = "Submit Entry";
   });
 }
