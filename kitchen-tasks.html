@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#1B5E20"/>
+<title>BellaBona Kitchen Tasks</title>
+<style>
+  :root {
+    --accent: #1B5E20;
+    --accent-dk: #0d3d12;
+    --strong: #C6EFCE; --strong-dk: #2E7D32;
+    --weak:   #FFC7CE; --weak-dk:   #B71C1C;
+    --cold:   #BDD7EE; --cold-dk:   #1565C0;
+    --text: #111;
+    --mut: #666;
+    --line: #e6e6e6;
+    --bg: #f5f5f5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+  }
+  header {
+    background: var(--accent); color: #fff;
+    padding: 14px 16px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; }
+  header .sub { opacity: 0.9; font-size: 12px; margin-top: 2px; }
+  main { padding: 12px; max-width: 720px; margin: 0 auto; padding-bottom: 60px; }
+
+  .picker {
+    background: #fff; border-radius: 8px; padding: 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .picker h2 { margin:0 0 8px; font-size: 15px; }
+  .picker .hint { font-size: 12px; color: var(--mut); margin-bottom: 10px; }
+  .op-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .op-grid a {
+    display: block; padding: 12px 10px; text-align: center;
+    background: #f0f4f0; border: 1px solid #d4e0d4; border-radius: 6px;
+    text-decoration: none; color: var(--accent-dk); font-weight: 600; font-size: 13px;
+  }
+  .op-grid a:active { background: #e0e8e0; }
+
+  .op-header {
+    background: #fff; border-radius: 8px; padding: 14px 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .op-header h2 { margin: 0 0 2px; font-size: 20px; }
+  .op-header .meta { font-size: 13px; color: var(--mut); }
+
+  .haccp-banner {
+    background: #fffde7; border-left: 4px solid #f9a825;
+    padding: 10px 12px; border-radius: 6px; font-size: 12px;
+    margin-bottom: 12px; line-height: 1.5;
+  }
+  .haccp-banner strong { color: #7a5d00; }
+
+  .station {
+    background: #fff; border-radius: 8px; padding: 12px 14px;
+    margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .station-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 8px;
+  }
+  .station-head h3 { margin: 0; font-size: 14px; color: var(--text); }
+  .station-head .time {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: #e8f5e9; padding: 3px 8px; border-radius: 10px;
+  }
+  .task {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+  }
+  .task:last-child { border-bottom: none; }
+  .letter {
+    font-weight: 700; font-size: 18px; width: 32px; height: 32px;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    color: #fff; flex-shrink: 0;
+  }
+  .letter.STRONG { background: var(--strong-dk); }
+  .letter.WEAK { background: var(--weak-dk); }
+  .letter.COLD { background: var(--cold-dk); }
+  .task-body { flex: 1; min-width: 0; }
+  .task-body .name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .task-body .info { font-size: 11.5px; color: var(--mut); margin-top: 2px; }
+  .strat {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    font-size: 10.5px; font-weight: 700; margin-right: 4px;
+  }
+  .strat.STRONG { background: var(--strong); color: var(--strong-dk); }
+  .strat.WEAK { background: var(--weak); color: var(--weak-dk); }
+  .strat.COLD { background: var(--cold); color: var(--cold-dk); }
+  .vol {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    min-width: 36px; text-align: right;
+  }
+  .check {
+    width: 28px; height: 28px; border: 2px solid #bbb; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; background: #fff; font-size: 18px;
+    user-select: none; flex-shrink: 0;
+  }
+  .check.done {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+
+  .haccp-card {
+    background: #fff; border-radius: 8px; padding: 14px 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .haccp-card h3 { margin: 0 0 10px; font-size: 14px; }
+  .haccp-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+  }
+  .haccp-item:last-child { border-bottom: none; }
+  .haccp-item .label { flex: 1; line-height: 1.3; }
+
+  .empty {
+    background: #fff; border-radius: 8px; padding: 28px 16px;
+    text-align: center; color: var(--mut); font-size: 14px;
+  }
+
+  footer {
+    text-align: center; padding: 16px 12px 30px;
+    color: var(--mut); font-size: 11px;
+  }
+  footer a { color: var(--accent); }
+  @media (min-width: 700px) {
+    main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ð± BellaBona Kitchen Tasks</h1>
+  <div class="sub" id="headerSub">Berlin kitchen</div>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  Updated automatically each evening. Data: <span id="dataDate">â</span><br/>
+  <a id="repoLink" href="https://github.com/Bellabona/assembly-tracking-app">github.com/Bellabona</a>
+</footer>
+
+<script>
+// ============================================================================
+// TASKS DATA â updated daily by the scheduled task. Last update from W17 run.
+// Structure: { date, kitchen, strategy_label, operators: { name: {shift, tasks: [...] } } }
+// ============================================================================
+const TASKS_DATA = {
+  "date": "2026-04-22",
+  "kitchen": "Berlin",
+  "week": "W17",
+  "strategy_label": "HYBRID â STRONG 05:00â06:30 Â· WEAK 06:45â07:30 (no blast chiller)",
+  "haccp_sop": [
+    "Core temp â¥75Â°C after cook",
+    "Beeketal cabinet 75â80Â°C",
+    "Core â¥65Â°C during hold (spot check 06:50)",
+    "Core â¥70Â°C before loading Cambro",
+    "Cambro preheated 10â15 min",
+    "Cambro closed immediately, no reopening",
+    "All transit â¤4h"
+  ],
+  "operators": {
+    "Joel J": {
+      "shift": "Tue 21:00 â Wed 04:00",
+      "role": "Operator",
+      "tasks": [
+        {"station": "COLD prep", "window": "21:00â23:30",
+         "dishes": [
+           {"letter":"A","name":"Mexican Barley & Quinoa Bowl","strategy":"COLD","volume":55},
+           {"letter":"B","name":"Grilled Halloumi & Pearl Barley Salad","strategy":"COLD","volume":75},
+           {"letter":"C","name":"Chicken parmesan poke","strategy":"COLD","volume":65}
+         ]},
+        {"station": "COLD assembly", "window": "00:00â04:00",
+         "dishes": [
+           {"letter":"D","name":"Greek Grain Lentil Power Bowl","strategy":"COLD","volume":95},
+           {"letter":"E","name":"Garden Green Salad with Chicken","strategy":"COLD","volume":85}
+         ]}
+      ]
+    },
+    "Manisha Patil": {
+      "shift": "Tue 20:30 â Wed 04:30",
+      "role": "Operator",
+      "tasks": [
+        {"station": "COLD prep", "window": "20:30â23:30",
+         "dishes": [
+           {"letter":"F","name":"Sweet Potato Goat Cheese Salad","strategy":"COLD","volume":80},
+           {"letter":"G","name":"Tuna Deopbap","strategy":"COLD","volume":70},
+           {"letter":"H","name":"Southwest Chickpea & Guacamole Bowl","strategy":"COLD","volume":65}
+         ]},
+        {"station": "COLD assembly", "window": "00:00â04:00",
+         "dishes": [
+           {"letter":"I","name":"Greek Gyros Salad","strategy":"COLD","volume":85},
+           {"letter":"J","name":"Club Sandwich","strategy":"COLD","volume":60}
+         ]}
+      ]
+    },
+    "Salman Iqbal": {
+      "shift": "Tue 20:30 â Wed 04:30",
+      "role": "Shift leader",
+      "tasks": [
+        {"station": "COLD prep", "window": "20:30â23:30",
+         "dishes": [
+           {"letter":"L","name":"Goat Cheese Pasta","strategy":"COLD","volume":50},
+           {"letter":"M","name":"High Protein Chicken Wrap","strategy":"COLD","volume":70},
+           {"letter":"N","name":"Pesto Mozzarella Sandwich","strategy":"COLD","volume":30}
+         ]},
+        {"station": "COLD assembly", "window": "00:00â04:00",
+         "dishes": [
+           {"letter":"3","name":"Heat-to-Eat Ratatouille","strategy":"COLD","volume":25}
+         ]}
+      ]
+    },
+    "Ankit Gaharwar": {
+      "shift": "Tue 22:00 â Wed 06:00",
+      "role": "Shift leader",
+      "tasks": [
+        {"station": "COLD assembly", "window": "00:00â04:00",
+         "dishes": [
+           {"letter":"A","name":"Mexican Barley & Quinoa Bowl","strategy":"COLD","volume":55},
+           {"letter":"B","name":"Grilled Halloumi & Pearl Barley","strategy":"COLD","volume":75}
+         ]},
+        {"station": "STRONG cook (mise)", "window": "05:00â06:00",
+         "dishes": [
+           {"letter":"P","name":"Chicken Korma â mise + cook start","strategy":"STRONG","volume":85},
+           {"letter":"Y","name":"Rajma Chawal â mise + cook start","strategy":"STRONG","volume":60}
+         ]}
+      ]
+    },
+    "Sreekant Goud": {
+      "shift": "Wed 01:30 â 09:30",
+      "role": "Operator",
+      "tasks": [
+        {"station": "COLD assembly", "window": "01:30â04:00",
+         "dishes": [
+           {"letter":"3","name":"Heat-to-Eat Ratatouille","strategy":"COLD","volume":25}
+         ]},
+        {"station": "STRONG cook", "window": "05:00â06:30",
+         "dishes": [
+           {"letter":"S","name":"Thai Yellow Vegan Curry","strategy":"STRONG","volume":40},
+           {"letter":"T","name":"Thai Green Chicken Curry","strategy":"STRONG","volume":50},
+           {"letter":"U","name":"Phanaeng Curry (XL)","strategy":"STRONG","volume":40}
+         ]},
+        {"station": "STRONG assembly", "window": "06:30â07:30",
+         "dishes": [
+           {"letter":"V","name":"B&B Butter Chicken + Rice & Naan","strategy":"STRONG","volume":125}
+         ]}
+      ]
+    },
+    "Varush Alladi": {
+      "shift": "Wed 01:30 â 09:30",
+      "role": "Operator",
+      "tasks": [
+        {"station": "COLD assembly finish", "window": "01:30â04:00",
+         "dishes": [
+           {"letter":"F","name":"Sweet Potato Goat Cheese Salad","strategy":"COLD","volume":80}
+         ]},
+        {"station": "STRONG cook", "window": "05:00â06:30",
+         "dishes": [
+           {"letter":"V","name":"B&B Butter Chicken + Rice & Naan","strategy":"STRONG","volume":125},
+           {"letter":"O","name":"Gyoza Korean Bowl","strategy":"STRONG","volume":50}
+         ]},
+        {"station": "WEAK cook+assembly", "window": "06:45â07:30",
+         "dishes": [
+           {"letter":"W","name":"Bacon Cheeseburger","strategy":"WEAK","volume":60},
+           {"letter":"X","name":"Parmigiana","strategy":"WEAK","volume":50}
+         ]}
+      ]
+    },
+    "Hamid Khan": {
+      "shift": "Wed 01:30 â 09:30",
+      "role": "Shift leader",
+      "tasks": [
+        {"station": "COLD assembly supervise", "window": "01:30â04:00",
+         "dishes": []},
+        {"station": "STRONG cook", "window": "05:00â06:30",
+         "dishes": [
+           {"letter":"P","name":"Chicken Korma","strategy":"STRONG","volume":85},
+           {"letter":"Q","name":"Ragout Bolognese","strategy":"STRONG","volume":30},
+           {"letter":"K","name":"Meatballs with Garden's Veggies","strategy":"STRONG","volume":30},
+           {"letter":"Y","name":"Rajma Chawal","strategy":"STRONG","volume":60}
+         ]},
+        {"station": "WEAK cook+assembly (lead)", "window": "06:45â07:30",
+         "dishes": [
+           {"letter":"R","name":"Red Pesto Pasta","strategy":"WEAK","volume":30}
+         ]},
+        {"station": "HACCP + Cambro preheat", "window": "07:15â07:45", "dishes": []},
+        {"station": "Cambro load + Dispatch", "window": "07:30â09:30", "dishes": []}
+      ]
+    }
+  }
+};
+
+// ============================================================================
+// Render
+// ============================================================================
+function escHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function checkboxKey(opName, taskIdx, dishIdx) {
+  return `kt_${TASKS_DATA.date}_${opName}_${taskIdx}_${dishIdx}`;
+}
+
+function renderPicker() {
+  const ops = Object.keys(TASKS_DATA.operators).sort();
+  const links = ops.map(name =>
+    `<a href="?op=${encodeURIComponent(name)}">${escHtml(name)}</a>`
+  ).join('');
+  return `
+    <div class="picker">
+      <h2>Pick your name</h2>
+      <div class="hint">Tap your name to see your tasks for ${escHtml(TASKS_DATA.date)}.</div>
+      <div class="op-grid">${links}</div>
+    </div>
+    <div class="haccp-banner">
+      <strong>HACCP SOP:</strong> Core â¥75Â°C after cook Â· Cabinet 75â80Â°C Â· Core â¥70Â°C at load Â·
+      Cambro preheated 10â15 min Â· Transit â¤4h Â· Dispatch by 09:30
+    </div>
+  `;
+}
+
+function renderOperator(name) {
+  const data = TASKS_DATA.operators[name];
+  if (!data) {
+    return `<div class="empty">
+      <p><strong>${escHtml(name)}</strong> not found in today's roster.</p>
+      <p><a href="?">â Back to name list</a></p>
+    </div>`;
+  }
+  const tasksHtml = data.tasks.map((task, ti) => {
+    const dishes = task.dishes || [];
+    const dishRows = dishes.length === 0
+      ? `<div style="font-size:12px; color:var(--mut); padding:8px 0;">Team-wide station â no specific dishes assigned</div>`
+      : dishes.map((d, di) => {
+          const key = checkboxKey(name, ti, di);
+          return `
+            <div class="task">
+              <div class="letter ${d.strategy}">${escHtml(d.letter)}</div>
+              <div class="task-body">
+                <div class="name">${escHtml(d.name)}</div>
+                <div class="info">
+                  <span class="strat ${d.strategy}">${d.strategy}</span>
+                  Vol ${d.volume}
+                </div>
+              </div>
+              <div class="vol">${d.volume}</div>
+              <div class="check" data-key="${key}" onclick="toggleCheck(this)">â</div>
+            </div>
+          `;
+        }).join('');
+    return `
+      <div class="station">
+        <div class="station-head">
+          <h3>${escHtml(task.station)}</h3>
+          <span class="time">${escHtml(task.window)}</span>
+        </div>
+        ${dishRows}
+      </div>
+    `;
+  }).join('');
+
+  const haccpHtml = TASKS_DATA.haccp_sop.map((item, i) => {
+    const key = `kt_haccp_${TASKS_DATA.date}_${name}_${i}`;
+    return `
+      <div class="haccp-item">
+        <div class="check" data-key="${key}" onclick="toggleCheck(this)">â</div>
+        <div class="label">${escHtml(item)}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="op-header">
+      <h2>ð¤ ${escHtml(name)}</h2>
+      <div class="meta">${escHtml(data.role)} Â· Shift ${escHtml(data.shift)}</div>
+    </div>
+    ${tasksHtml}
+    <div class="haccp-card">
+      <h3>ð HACCP Checklist</h3>
+      ${haccpHtml}
+    </div>
+    <div style="text-align:center; margin-top:16px;">
+      <a href="?" style="color:var(--accent); font-size:13px;">â Switch operator</a>
+    </div>
+  `;
+}
+
+function toggleCheck(el) {
+  const key = el.getAttribute('data-key');
+  const done = el.classList.toggle('done');
+  try {
+    if (done) localStorage.setItem(key, '1');
+    else localStorage.removeItem(key);
+  } catch (e) { /* storage may be disabled */ }
+}
+
+function restoreChecks() {
+  try {
+    [...document.querySelectorAll('.check')].forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (localStorage.getItem(key)) el.classList.add('done');
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// Boot
+(function () {
+  const params = new URLSearchParams(location.search);
+  const op = params.get('op');
+  const app = document.getElementById('app');
+  const sub = document.getElementById('headerSub');
+  const dateSpan = document.getElementById('dataDate');
+  dateSpan.textContent = TASKS_DATA.date;
+  sub.textContent = `Berlin Â· ${TASKS_DATA.date} Â· ${TASKS_DATA.week}`;
+
+  if (op) {
+    app.innerHTML = renderOperator(op);
+  } else {
+    app.innerHTML = renderPicker();
+  }
+  restoreChecks();
+})();
+</script>
+</body>
+</html>
