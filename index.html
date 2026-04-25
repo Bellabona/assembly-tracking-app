@@ -125,7 +125,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
-.dish {
+.dish-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: #1e1e35;
+    }
+    .dish {
   background: var(--surface); border: 2px solid var(--border);
   border-radius: 14px; padding: 10px 5px 8px;
   text-align: center;
@@ -358,6 +366,33 @@ const EMPLOYEES = [
       X: "Southwest Chicken Corn Chowder",
       Y: "Mix-It-Yourself Pasta Ragout alla Bolognese",
     };
+    const DISH_IMAGES = {
+      A: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/0215d371-ae10-4033-a03e-1a4352eb818f/W_0215d371-ae10-4033-a03e-1a4352eb818f.png",
+      B: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/1612279b-75df-445d-a1e0-264a4609e0c6/W_1612279b-75df-445d-a1e0-264a4609e0c6.png",
+      C: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/17c050a1-1a85-4fa5-a4c4-d99d9dabf3ca/W_17c050a1-1a85-4fa5-a4c4-d99d9dabf3ca.jpeg",
+      D: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/2624d4af-d54f-4e06-9fe4-2de562ab3717/W_2624d4af-d54f-4e06-9fe4-2de562ab3717.png",
+      E: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/065d62da-780b-4141-ac2f-c95ee7eaf3bd/W_065d62da-780b-4141-ac2f-c95ee7eaf3bd.png",
+      F: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/2c8a85a6-92e9-4612-8e01-de606aa66646/W_2c8a85a6-92e9-4612-8e01-de606aa66646.png",
+      G: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/4f737877-2868-4c81-804f-2e76dfc85d12/W_4f737877-2868-4c81-804f-2e76dfc85d12.png",
+      H: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/dcf0313d-7289-4a0e-b53b-d3611a1f8c53/W_dcf0313d-7289-4a0e-b53b-d3611a1f8c53.png",
+      I: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/0425ed34-4afd-4e99-bcd1-03c02d8177cf/W_0425ed34-4afd-4e99-bcd1-03c02d8177cf.png",
+      J: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/1c3b84cc-2afc-456c-8a16-2939ab082be7/W_1c3b84cc-2afc-456c-8a16-2939ab082be7.png",
+      K: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/a43bbb9b-d605-46dc-b072-16740be93db8/W_a43bbb9b-d605-46dc-b072-16740be93db8.png",
+      L: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/803f089c-b307-47e8-9b7b-a46f327610ed/W_803f089c-b307-47e8-9b7b-a46f327610ed.png",
+      M: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/19a84260-c532-4bfe-a155-ee766ee02de5/W_19a84260-c532-4bfe-a155-ee766ee02de5.png",
+      N: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/1ddf5878-e431-4e07-a8e8-783cd33ce21b/W_1ddf5878-e431-4e07-a8e8-783cd33ce21b.png",
+      O: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/5fa5f0c4-074c-49ca-a79f-80768b1db0dd/W_5fa5f0c4-074c-49ca-a79f-80768b1db0dd.png",
+      P: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/1ff705b6-ab4f-49cf-8743-e78791289e3c/W_1ff705b6-ab4f-49cf-8743-e78791289e3c.png",
+      Q: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/5caa76e9-23d9-4675-b3be-f4d9a20bc460/W_5caa76e9-23d9-4675-b3be-f4d9a20bc460.png",
+      R: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/76ae7171-dd2f-4c8f-9dc0-7811f48b8ab3/W_76ae7171-dd2f-4c8f-9dc0-7811f48b8ab3.png",
+      S: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/8fa1cf7b-e434-4d2a-8712-ae968fdcf66c/W_8fa1cf7b-e434-4d2a-8712-ae968fdcf66c.png",
+      T: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/3c39c686-7924-479c-824c-fa9f846ad31e/W_3c39c686-7924-479c-824c-fa9f846ad31e.png",
+      U: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/b61de802-de90-4b4b-baac-5250ba3a67a2/W_b61de802-de90-4b4b-baac-5250ba3a67a2.png",
+      V: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/bf2cbf30-ebb9-11eb-bf3e-4d3f316ceaeb/W_bf2cbf30-ebb9-11eb-bf3e-4d3f316ceaeb.png",
+      W: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/72663dfa-e2b4-4663-b6d8-bfa697f3f81c/W_72663dfa-e2b4-4663-b6d8-bfa697f3f81c.png",
+      X: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/52275d04-2142-4c1b-9a66-f6aa1ca53661/W_52275d04-2142-4c1b-9a66-f6aa1ca53661.png",
+      Y: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/f199acaf-9479-4263-b1cd-01a22ac2e1af/W_f199acaf-9479-4263-b1cd-01a22ac2e1af.png",
+    };
     (function() {
   const d = new Date();
   document.getElementById('headerDate').textContent =
@@ -386,7 +421,7 @@ for (let i = 65; i <= 90; i++) {
   const div = document.createElement("div");
   div.className = "dish";
   div.id = "tile_"+letter;
-  div.innerHTML = '<div class="letter">'+letter+'</div><div class="dish-name">'+(DISH_NAMES[letter]||"")+'</div><input type="number" min="0" placeholder="0" id="dish_'+letter+'">';
+  div.innerHTML = (DISH_IMAGES[letter]?'<img class="dish-img" src="'+DISH_IMAGES[letter]+'" alt="" loading="lazy">':'')+'<div class="letter">'+letter+'</div><div class="dish-name">'+(DISH_NAMES[letter]||"")+'</div><input type="number" min="0" placeholder="0" id="dish_'+letter+'">';
   const inp = div.querySelector("input");
   inp.addEventListener("input", () => div.classList.toggle("has-value", parseFloat(inp.value) > 0));
   div.addEventListener("click", (e) => {
