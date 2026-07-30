@@ -278,12 +278,14 @@ textarea::placeholder { color: var(--muted); }
   box-shadow: 0 4px 20px rgba(124,77,255,0.35); transition: all 0.15s;
 }
 .btn-again:hover { transform: translateY(-1px); }
-</style>
+.emp-chip.disabled{opacity:.35;pointer-events:none;filter:grayscale(1);}
+    .role-tabs.disabled{opacity:.45;pointer-events:none;}
+  </style>
 </head>
 <body>
 
 <header class="app-header">
-  <img class="header-logo" src="https://bellabona.com/hubfs/logo-bellabona.svg" alt="BellaBona">
+  <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 146.861 26.019" role="img" aria-label="BellaBona" fill="#F5827B"><title>BellaBona</title><path d="M 0 0.008 L 9.748 0.008 C 11.319 0.008 12.45 0.365 13.141 1.08 C 13.832 1.794 14.177 2.797 14.177 4.086 L 14.177 9.691 C 14.177 10.516 14.042 11.196 13.771 11.732 C 13.498 12.268 13.066 12.645 12.471 12.863 C 13.066 13.084 13.498 13.434 13.77 13.914 C 14.039 14.395 14.177 15.033 14.177 15.831 L 14.177 21.93 C 14.177 23.222 13.833 24.222 13.141 24.937 C 12.45 25.651 11.319 26.008 9.749 26.008 L 0 26.008 Z M 9.547 10.022 L 9.547 4.583 C 9.547 4.145 9.466 3.848 9.304 3.698 C 9.14 3.548 8.83 3.472 8.369 3.472 L 4.671 3.472 L 4.671 11.135 L 8.369 11.135 C 8.83 11.135 9.14 11.054 9.304 10.889 C 9.466 10.723 9.547 10.434 9.547 10.024 Z M 9.547 21.433 L 9.547 15.705 C 9.547 15.267 9.466 14.97 9.304 14.82 C 9.14 14.67 8.83 14.595 8.369 14.595 L 4.671 14.595 L 4.671 22.546 L 8.369 22.546 C 8.83 22.546 9.14 22.47 9.304 22.321 C 9.466 22.171 9.547 21.875 9.547 21.436 Z M 29.312 22.384 L 29.312 26.008 L 16.8 26.008 L 16.8 0.011 L 28.986 0.011 L 28.986 3.635 L 21.509 3.635 L 21.509 10.846 L 27.807 10.846 L 27.807 14.513 L 21.509 14.513 L 21.509 22.384 L 29.311 22.384 Z M 43.421 22.384 L 43.421 26.008 L 31.925 26.008 L 31.925 0.008 L 36.596 0.008 L 36.596 22.384 Z M 57.549 22.384 L 57.549 26.008 L 46.052 26.008 L 46.052 0.008 L 50.724 0.008 L 50.724 22.384 Z M 71.625 0.011 L 65.328 0.011 L 60.169 26.011 L 64.841 26.011 L 65.752 20.614 L 71.343 20.614 L 72.316 26.011 L 77.029 26.011 Z M 66.358 17.026 L 68.459 4.582 L 70.7 17.026 L 66.359 17.026 Z M 80.012 0.04 L 89.753 0.04 C 91.322 0.04 92.451 0.397 93.143 1.111 C 93.831 1.826 94.178 2.826 94.178 4.115 L 94.178 9.715 C 94.178 10.539 94.044 11.217 93.772 11.753 C 93.5 12.289 93.067 12.666 92.472 12.884 C 93.067 13.105 93.5 13.455 93.772 13.935 C 94.041 14.416 94.178 15.054 94.178 15.849 L 94.178 21.943 C 94.178 23.232 93.834 24.235 93.143 24.947 C 92.454 25.662 91.322 26.019 89.753 26.019 L 80.012 26.019 Z M 89.54 10.004 L 89.54 4.591 C 89.54 4.155 89.461 3.861 89.298 3.709 C 89.137 3.558 88.826 3.483 88.368 3.483 L 84.688 3.483 L 84.688 11.109 L 88.368 11.109 C 88.826 11.109 89.137 11.028 89.298 10.862 C 89.458 10.697 89.54 10.411 89.54 10.001 Z M 89.54 21.36 L 89.54 15.661 C 89.54 15.224 89.461 14.93 89.298 14.778 C 89.137 14.629 88.826 14.552 88.368 14.552 L 84.688 14.552 L 84.688 22.465 L 88.368 22.465 C 88.826 22.465 89.137 22.389 89.298 22.239 C 89.458 22.09 89.54 21.795 89.54 21.357 Z M 109.58 1.072 C 108.888 0.357 107.757 0 106.185 0 L 101.226 0 C 99.683 0 98.56 0.357 97.855 1.072 C 97.148 1.786 96.799 2.789 96.799 4.081 L 96.799 21.935 C 96.799 23.227 97.148 24.23 97.855 24.944 C 98.56 25.659 99.683 26.016 101.226 26.016 L 106.185 26.016 C 107.757 26.016 108.888 25.658 109.58 24.944 C 110.271 24.23 110.616 23.227 110.616 21.935 L 110.616 4.081 C 110.616 2.788 110.271 1.785 109.58 1.071 Z M 105.942 21.275 C 105.942 21.688 105.867 21.977 105.719 22.142 C 105.569 22.305 105.263 22.389 104.805 22.389 L 102.651 22.389 C 102.19 22.389 101.879 22.305 101.716 22.142 C 101.553 21.977 101.473 21.688 101.473 21.275 L 101.473 4.744 C 101.473 4.304 101.553 4.008 101.716 3.855 C 101.879 3.706 102.19 3.629 102.651 3.629 L 104.805 3.629 C 105.263 3.629 105.569 3.706 105.719 3.855 C 105.867 4.008 105.942 4.304 105.942 4.744 Z M 123.156 0 L 127.423 0 L 127.423 26.01 L 123.035 26.01 L 117.547 8.779 L 117.547 26.01 L 113.239 26.01 L 113.239 0 L 117.75 0 L 123.156 16.984 Z M 141.455 0 L 135.155 0 L 129.994 26.01 L 134.669 26.01 L 135.58 20.611 L 141.173 20.611 L 142.147 26.01 L 146.861 26.01 Z M 136.186 17.023 L 138.286 4.576 L 140.528 17.024 L 136.186 17.024 Z"/></svg>
   <div class="header-right">
     <div class="header-title">Assembly Tracking</div>
     <div class="header-date" id="headerDate"></div>
@@ -298,7 +300,7 @@ textarea::placeholder { color: var(--muted); }
     <input type="date" id="date">
   </div>
 
-  <div class="section-label">Team &#8212; tap to select</div>
+  <div class="section-label">Team &#8212; tap your name</div>
   <div class="emp-scroll" id="employees"></div>
 
   <div class="section-label">Dishes assembled (A&#8211;Z)</div>
@@ -306,7 +308,7 @@ textarea::placeholder { color: var(--muted); }
 
   <div class="section-label">Role</div>
   <div class="role-tabs" id="roleTabs">
-    <div class="role-tab active" data-role="Main">Main</div>
+    <div class="role-tab" data-role="Main">Main</div>
     <div class="role-tab" data-role="Assist">Assist</div>
     <div class="role-tab" data-role="Support">Support</div>
   </div>
@@ -411,7 +413,18 @@ EMPLOYEES.forEach(name => {
   chip.className = "emp-chip";
   chip.dataset.name = name;
   chip.innerHTML = '<div class="check-badge">&#10003;</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
-  chip.addEventListener("click", () => chip.classList.toggle("checked"));
+  chip.addEventListener("click", () => {
+    if (chip.classList.contains("disabled")) return;
+    if (chip.classList.contains("checked")) {
+      chip.classList.remove("checked");
+      empBox.querySelectorAll(".emp-chip").forEach(c => c.classList.remove("disabled"));
+      setRolesEnabled(false);
+    } else if (!empBox.querySelector(".emp-chip.checked")) {
+      chip.classList.add("checked");
+      empBox.querySelectorAll(".emp-chip").forEach(c => { if (c !== chip) c.classList.add("disabled"); });
+      setRolesEnabled(true);
+    }
+  });
   empBox.appendChild(chip);
 });
 
@@ -442,14 +455,21 @@ for (let i = 65; i <= 90; i++) {
   dishBox.appendChild(div);
 }
 
-let selectedRole = "Main";
-document.querySelectorAll(".role-tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    selectedRole = tab.dataset.role;
+const roleTabs = document.getElementById("roleTabs");
+  function setRolesEnabled(on){
+    roleTabs.classList.toggle("disabled", !on);
+    if(!on){ roleTabs.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active")); }
+  }
+  function getSelectedRoles(){
+    return [...roleTabs.querySelectorAll(".role-tab.active")].map(t => t.dataset.role);
+  }
+  setRolesEnabled(false);
+  roleTabs.querySelectorAll(".role-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      if (roleTabs.classList.contains("disabled")) return;
+      tab.classList.toggle("active");
+    });
   });
-});
 
 function showError(msg) {
   const el = document.getElementById("errorMsg");
@@ -474,8 +494,12 @@ function submitForm() {
     if (qty > 0) dishes.push(l+":"+qty);
   }
   if (!date) { showError("&#9888;&#65039; Please select a date."); return; }
-  if (!selectedEmployees.length) { showError("&#9888;&#65039; Please select at least one team member."); return; }
+  if (selectedEmployees.length !== 1) { showError("&#9888;&#65039; Please select your name."); return; }
   if (!dishes.length) { showError("&#9888;&#65039; Please enter a quantity for at least one dish."); return; }
+
+  const roles = getSelectedRoles();
+  if (!roles.length) { showError("&#9888;&#65039; Please select at least one role."); return; }
+  const rolesStr = roles.join(", ");
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "Saving&#8230;";
@@ -484,11 +508,11 @@ function submitForm() {
     method: "POST",
     redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
-    body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role: selectedRole, comment })
+    body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role: rolesStr, comment })
   })
   .then(() => {
     document.getElementById("successDetail").innerHTML =
-      date+"<br>"+selectedEmployees.map(n=>"<span>"+n+"</span>").join(' ')+"<br>"+dishes.map(d=>"<span>"+d+"</span>").join(' ')+"<br><span>"+selectedRole+"</span>";
+      date+"<br>"+selectedEmployees.map(n=>"<span>"+n+"</span>").join(' ')+"<br>"+dishes.map(d=>"<span>"+d+"</span>").join(' ')+"<br><span>"+rolesStr+"</span>";
     document.getElementById("formSection").style.display = "none";
     document.getElementById("submitBar").style.display = "none";
     document.getElementById("successScreen").classList.add("visible");
@@ -500,7 +524,7 @@ function submitForm() {
 }
 
 function resetForm() {
-  document.querySelectorAll(".emp-chip").forEach(c => c.classList.remove("checked"));
+  document.querySelectorAll(".emp-chip").forEach(c => { c.classList.remove("checked"); c.classList.remove("disabled"); });
   for (let i = 65; i <= 90; i++) {
     const l = String.fromCharCode(i);
     const inp = document.getElementById("dish_"+l);
@@ -509,9 +533,8 @@ function resetForm() {
     if (tile) tile.classList.remove("has-value");
   }
   document.getElementById("comment").value = "";
-  selectedRole = "Main";
   document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
-  document.querySelector('[data-role="Main"]').classList.add("active");
+  setRolesEnabled(false);
   const btn = document.getElementById("submitBtn");
   btn.disabled = false; btn.textContent = "Submit Entry";
   document.getElementById("successScreen").classList.remove("visible");
