@@ -535,6 +535,40 @@ const DISH_LETTERS = Object.keys(DISH_NAMES);
 // so a fat-fingered 900 is refused instead of becoming truth.
 const MAX_PER_DISH = 400;
 
+// Bumped when the payload shape changes, so rows can be interpreted later.
+const APP_VERSION = "2026.07.31";
+
+// Dish names are written into this file by the weekly task and already contain
+// "&" ("Turkish Chickpeas & Spinach Tomato Stew", "Test&Tell: ..."). Anything
+// interpolated into innerHTML gets escaped rather than trusted.
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Dish names run long ("Test&Tell: High-Protien Thai Peanut Bowl with Chickpea &
+// Tofu"). Trim for the confirmation chips, and fall back to the letter if the
+// weekly task ever leaves a name blank.
+function shortDish(name, letter) {
+  const n = String(name || "").trim();
+  if (!n) return letter;
+  return n.length > 30 ? n.slice(0, 29).trimEnd() + "…" : n;
+}
+
+// Idempotency id. crypto.randomUUID is not available on older kitchen phones or
+// over plain http, so fall back to random bytes and finally to Math.random.
+function newEntryId() {
+  try {
+    if (window.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    if (window.crypto && crypto.getRandomValues) {
+      const a = new Uint8Array(16); crypto.getRandomValues(a);
+      return [...a].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+  } catch (e) { /* fall through */ }
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
 // Whole non-negative counts only: 0 for empty, NaN for anything else.
 function parseCount(value) {
   const raw = String(value == null ? "" : value).trim();
@@ -625,6 +659,7 @@ function submitForm() {
   const comment = document.getElementById("comment").value.trim();
   const selectedEmployees = [...document.querySelectorAll(".emp-chip.checked")].map(c => c.dataset.name);
   let dishes = [];
+  let items = [];
   let notWhole = "";
   let tooMany = "";
   for (const l of DISH_LETTERS) {
@@ -633,7 +668,13 @@ function submitForm() {
     const qty = parseCount(inp.value);
     if (isNaN(qty)) { notWhole = l; break; }
     if (qty > MAX_PER_DISH) { tooMany = l; break; }
-    if (qty > 0) dishes.push(l+":"+qty);
+    if (qty > 0) {
+      dishes.push(l+":"+qty);
+      // The letter alone is not a durable identifier: the weekly task reassigns
+      // letters, so "A:12" cannot be interpreted after the menu rotates. Send the
+      // dish NAME with every count so history stays readable forever.
+      items.push({ letter: l, dish: DISH_NAMES[l] || "", qty: qty });
+    }
   }
   // showError writes to textContent, so these must be real characters, not HTML
   // entities. Written as \uXXXX escapes to keep every byte of this file ASCII.
@@ -650,19 +691,41 @@ function submitForm() {
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "Saving\u2026";
 
+  // One id per attempt, reused across retries of THAT attempt, so a double tap or
+  // a retry after an ambiguous failure cannot append the same shift twice. Held on
+  // the button so a genuinely new entry always gets a fresh id.
+  if (!btn.dataset.entryId) btn.dataset.entryId = newEntryId();
+
   fetch(SCRIPT_URL, {
     method: "POST",
     redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
-    body: JSON.stringify({ date, employees: selectedEmployees, dishes: dishes.join(" | "), role: rolesStr, comment })
+    body: JSON.stringify({
+      // `dishes` stays exactly as before so the existing sheet and every report
+      // built on it keep working untouched. `items` is additive.
+      date, employees: selectedEmployees, dishes: dishes.join(" | "),
+      role: rolesStr, comment,
+      items: items,
+      entryId: btn.dataset.entryId,
+      clientTime: new Date().toISOString(),
+      tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
+      appVersion: APP_VERSION
+    })
   })
   .then(async (res) => {
     if (!res.ok) throw new Error("server said HTTP "+res.status);
     const body = await res.text();
     if (looksLikeSaveFailure(body)) throw new Error("the sheet rejected the entry");
     clearDraft();
+    // Saved, so the next submit is a genuinely different entry and must not reuse
+    // this id -- otherwise the server would dedupe a real second shift away.
+    delete btn.dataset.entryId;
+    // Show dish NAMES back to staff, not letters: "A:12" is meaningless to read,
+    // and it is the confirmation they use to spot a mis-tap.
     document.getElementById("successDetail").innerHTML =
-      date+"<br>"+selectedEmployees.map(n=>"<span>"+n+"</span>").join(' ')+"<br>"+dishes.map(d=>"<span>"+d+"</span>").join(' ')+"<br><span>"+rolesStr+"</span>";
+      escapeHtml(date)+"<br>"+selectedEmployees.map(n=>"<span>"+escapeHtml(n)+"</span>").join(' ')
+      +"<br>"+items.map(it => "<span>"+escapeHtml(shortDish(it.dish, it.letter))+" &times;"+it.qty+"</span>").join(' ')
+      +"<br><span>"+escapeHtml(rolesStr)+"</span>";
     document.getElementById("formSection").style.display = "none";
     document.getElementById("submitBar").style.display = "none";
     document.getElementById("successScreen").classList.add("visible");
@@ -687,6 +750,7 @@ function resetForm() {
   setRolesEnabled(false);
   const btn = document.getElementById("submitBtn");
   btn.disabled = false; btn.textContent = "Submit Entry";
+  delete btn.dataset.entryId;   // a fresh entry must never reuse a submitted id
   document.getElementById("successScreen").classList.remove("visible");
   document.getElementById("formSection").style.display = "";
   document.getElementById("submitBar").style.display = "";

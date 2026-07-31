@@ -29,7 +29,20 @@
  *    except make it return the row number it wrote if that is easy -- e.g.
  *    `return sheet.getLastRow();`. If that is awkward, return nothing; the
  *    wrapper below copes.
- * 3. Paste `doPost` and `jsonOut` from this file in alongside it.
+ * 3. Paste everything from this file in alongside it.
+ *
+ *    NOTHING YOU ALREADY HAVE CHANGES. Your existing sheet keeps its columns and
+ *    its one-row-per-entry shape, so every report built on it is unaffected. This
+ *    patch is purely additive and does three things:
+ *      a) returns real JSON so the client can confirm a save (see WHY below);
+ *      b) ignores a replayed entryId, so a double tap or a retry after an
+ *         ambiguous failure cannot append the same shift twice;
+ *      c) writes one row per dish to a NEW tab, 'AssemblyItems', carrying the
+ *         dish NAME. Letters are reassigned weekly -- in the 03.08 menu 21 of 22
+ *         letters changed dish -- so letter-only history cannot be interpreted
+ *         after the fact. The tab is created automatically on first use.
+ *    If the per-dish write ever fails, the entry itself is still saved and still
+ *    reported as saved: that path is deliberately non-fatal.
  * 4. Deploy > Manage deployments > edit the active deployment > Deploy.
  *    IMPORTANT: keep the SAME deployment so the /exec URL does not change --
  *    that URL is hardcoded as SCRIPT_URL in index.html.
@@ -53,11 +66,39 @@
  * of an HTML page that merely looks like one.
  */
 function doPost(e) {
+  var lock = LockService.getScriptLock();
   try {
+    // Two phones submitting at the same instant would otherwise interleave their
+    // appendRow calls and could both pass the duplicate check below.
+    lock.waitLock(20000);
+
+    var data = JSON.parse(e.postData.contents);
+
+    // --- Idempotency -------------------------------------------------------
+    // The client sends one entryId per attempt and reuses it across retries, so
+    // a double tap or a retry after an ambiguous failure lands here twice with
+    // the same id. Recognise it and report success WITHOUT writing again.
+    if (data.entryId && alreadyRecorded_(data.entryId)) {
+      return jsonOut({ ok: true, status: 'ok', duplicate: true });
+    }
+
     var row = handleEntry(e);
 
-    // handleEntry may or may not report a row number; both are fine.
-    var payload = { ok: true, status: 'ok' };
+    // --- Durable per-dish rows --------------------------------------------
+    // Additive: handleEntry still writes your original row to your original
+    // sheet, so existing reports are untouched. This adds one row per dish to a
+    // SEPARATE tab, carrying the dish NAME so the history stays interpretable
+    // after the weekly task reassigns letters.
+    var items = 0;
+    try {
+      items = appendItemRows_(data);
+    } catch (itemErr) {
+      // A failure here must not lose the entry that already saved successfully.
+      console.error('per-dish rows failed (entry itself saved): ' +
+                    (itemErr && itemErr.stack ? itemErr.stack : itemErr));
+    }
+
+    var payload = { ok: true, status: 'ok', items: items };
     if (typeof row === 'number' && isFinite(row)) {
       payload.row = row;
     }
@@ -73,7 +114,92 @@ function doPost(e) {
       status: 'error',
       error: String((err && err.message) ? err.message : err)
     });
+
+  } finally {
+    try { lock.releaseLock(); } catch (e2) { /* never mask the real result */ }
   }
+}
+
+
+/** Name of the additive per-dish tab. Your existing sheet is never touched. */
+var ITEMS_SHEET = 'AssemblyItems';
+
+
+/**
+ * True if this entryId has been written before.
+ *
+ * Uses the Items tab's entry_id column as the source of truth rather than a
+ * cache, so dedupe still works after a script restart or a cache eviction.
+ */
+function alreadyRecorded_(entryId) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ITEMS_SHEET);
+  if (!sh || sh.getLastRow() < 2) return false;
+
+  var col = itemsHeader_().indexOf('entry_id') + 1;
+  if (col < 1) return false;
+
+  var ids = sh.getRange(2, col, sh.getLastRow() - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(entryId)) return true;
+  }
+  return false;
+}
+
+
+function itemsHeader_() {
+  return ['recorded_at', 'entry_date', 'employee', 'role',
+          'dish_letter', 'dish_name', 'qty',
+          'comment', 'entry_id', 'client_time', 'tz', 'app_version'];
+}
+
+
+/**
+ * Appends one row per dish. Returns how many rows were written.
+ *
+ * Why one row per dish instead of "A:12 | C:30" in a single cell: every report
+ * you will want (per dish, per person, per week, dish mix, throughput) is a
+ * plain pivot table over this shape, and impossible over a packed string.
+ *
+ * Why dish_name is stored and not just dish_letter: letters are reassigned every
+ * week. In the 03.08 menu 21 of 22 letters changed dish, so a letter alone
+ * cannot be interpreted after the fact.
+ */
+function appendItemRows_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(ITEMS_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ITEMS_SHEET);
+    sh.appendRow(itemsHeader_());
+    sh.setFrozenRows(1);
+  }
+
+  var items = data.items;
+
+  // Older clients (a phone with a cached page) send only the packed `dishes`
+  // string. Parse it so their entries still land here -- without the dish name,
+  // which is exactly the gap this tab exists to close.
+  if (!items || !items.length) {
+    items = [];
+    String(data.dishes || '').split('|').forEach(function (part) {
+      var m = String(part).trim().match(/^([A-Z])\s*:\s*(\d+)$/);
+      if (m) items.push({ letter: m[1], dish: '', qty: Number(m[2]) });
+    });
+  }
+  if (!items.length) return 0;
+
+  var now = new Date();
+  var employee = (data.employees || []).join(', ');
+  var rows = items.map(function (it) {
+    return [now, data.date || '', employee, data.role || '',
+            it.letter || '', it.dish || '', Number(it.qty) || 0,
+            data.comment || '', data.entryId || '',
+            data.clientTime || '', data.tz || '', data.appVersion || ''];
+  });
+
+  // One setValues beats N appendRow calls: fewer round trips, and the block
+  // either lands or does not, so a timeout cannot leave half an entry.
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  return rows.length;
 }
 
 
