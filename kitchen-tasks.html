@@ -134,6 +134,28 @@
     color: var(--mut); font-size: 11px;
   }
   footer a { color: var(--accent); }
+
+  /* Stale-plan warning. Deliberately loud: a silently outdated shift plan is the
+     dangerous case, because the page otherwise looks perfectly current. */
+  .stale {
+    border-radius: 10px; padding: 12px 14px; margin: 0 0 14px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .stale strong { display: block; margin-bottom: 3px; font-size: 14px; }
+  .stale-soft { background: #FFF4E5; border: 1px solid #F0A34A; color: #6B4310; }
+  .stale-hard { background: #FDECEA; border: 1px solid #E0655B; color: #7A1F16; }
+
+  /* Unsent checks. Only shown when the outbox is non-empty, so an all-clear is
+     the absence of a message rather than another badge to learn. */
+  .pending { display: none; }
+  .pending.visible {
+    display: block; background: #FFF4E5; border: 1px solid #F0A34A;
+    color: #6B4310; border-radius: 10px; padding: 9px 12px;
+    margin: 0 0 12px; font-size: 12px; font-weight: 600;
+  }
+
+  .check:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
   @media (min-width: 700px) {
     main { padding: 20px; }
   }
@@ -142,48 +164,48 @@
 <body>
 
 <header>
-  <h1>ð± BellaBona Kitchen Tasks</h1>
+  <h1>🍱 BellaBona Kitchen Tasks</h1>
   <div class="sub" id="headerSub">Berlin kitchen</div>
 </header>
 
 <main id="app"></main>
 
 <footer>
-  Updated automatically each evening. Data: <span id="dataDate">â</span><br/>
+  Updated automatically each evening. Data: <span id="dataDate">—</span><br/>
   <a id="repoLink" href="https://github.com/Bellabona/assembly-tracking-app">github.com/Bellabona</a>
 </footer>
 
 <script>
 // ============================================================================
-// TASKS DATA â updated daily by the scheduled task. Last update from W17 run.
+// TASKS DATA — updated daily by the scheduled task. Last update from W17 run.
 // Structure: { date, kitchen, strategy_label, operators: { name: {shift, tasks: [...] } } }
 // ============================================================================
 const TASKS_DATA = {
   "date": "2026-04-22",
   "kitchen": "Berlin",
   "week": "W17",
-  "strategy_label": "HYBRID â STRONG 05:00â06:30 Â· WEAK 06:45â07:30 (no blast chiller)",
+  "strategy_label": "HYBRID — STRONG 05:00–06:30 · WEAK 06:45–07:30 (no blast chiller)",
   "haccp_sop": [
-    "Core temp â¥75Â°C after cook",
-    "Beeketal cabinet 75â80Â°C",
-    "Core â¥65Â°C during hold (spot check 06:50)",
-    "Core â¥70Â°C before loading Cambro",
-    "Cambro preheated 10â15 min",
+    "Core temp ≥75°C after cook",
+    "Beeketal cabinet 75–80°C",
+    "Core ≥65°C during hold (spot check 06:50)",
+    "Core ≥70°C before loading Cambro",
+    "Cambro preheated 10–15 min",
     "Cambro closed immediately, no reopening",
-    "All transit â¤4h"
+    "All transit ≤4h"
   ],
   "operators": {
     "Joel J": {
-      "shift": "Tue 21:00 â Wed 04:00",
+      "shift": "Tue 21:00 → Wed 04:00",
       "role": "Operator",
       "tasks": [
-        {"station": "COLD prep", "window": "21:00â23:30",
+        {"station": "COLD prep", "window": "21:00–23:30",
          "dishes": [
            {"letter":"A","name":"Mexican Barley & Quinoa Bowl","strategy":"COLD","volume":55},
            {"letter":"B","name":"Grilled Halloumi & Pearl Barley Salad","strategy":"COLD","volume":75},
            {"letter":"C","name":"Chicken parmesan poke","strategy":"COLD","volume":65}
          ]},
-        {"station": "COLD assembly", "window": "00:00â04:00",
+        {"station": "COLD assembly", "window": "00:00–04:00",
          "dishes": [
            {"letter":"D","name":"Greek Grain Lentil Power Bowl","strategy":"COLD","volume":95},
            {"letter":"E","name":"Garden Green Salad with Chicken","strategy":"COLD","volume":85}
@@ -191,16 +213,16 @@ const TASKS_DATA = {
       ]
     },
     "Manisha Patil": {
-      "shift": "Tue 20:30 â Wed 04:30",
+      "shift": "Tue 20:30 → Wed 04:30",
       "role": "Operator",
       "tasks": [
-        {"station": "COLD prep", "window": "20:30â23:30",
+        {"station": "COLD prep", "window": "20:30–23:30",
          "dishes": [
            {"letter":"F","name":"Sweet Potato Goat Cheese Salad","strategy":"COLD","volume":80},
            {"letter":"G","name":"Tuna Deopbap","strategy":"COLD","volume":70},
            {"letter":"H","name":"Southwest Chickpea & Guacamole Bowl","strategy":"COLD","volume":65}
          ]},
-        {"station": "COLD assembly", "window": "00:00â04:00",
+        {"station": "COLD assembly", "window": "00:00–04:00",
          "dishes": [
            {"letter":"I","name":"Greek Gyros Salad","strategy":"COLD","volume":85},
            {"letter":"J","name":"Club Sandwich","strategy":"COLD","volume":60}
@@ -208,71 +230,71 @@ const TASKS_DATA = {
       ]
     },
     "Salman Iqbal": {
-      "shift": "Tue 20:30 â Wed 04:30",
+      "shift": "Tue 20:30 → Wed 04:30",
       "role": "Shift leader",
       "tasks": [
-        {"station": "COLD prep", "window": "20:30â23:30",
+        {"station": "COLD prep", "window": "20:30–23:30",
          "dishes": [
            {"letter":"L","name":"Goat Cheese Pasta","strategy":"COLD","volume":50},
            {"letter":"M","name":"High Protein Chicken Wrap","strategy":"COLD","volume":70},
            {"letter":"N","name":"Pesto Mozzarella Sandwich","strategy":"COLD","volume":30}
          ]},
-        {"station": "COLD assembly", "window": "00:00â04:00",
+        {"station": "COLD assembly", "window": "00:00–04:00",
          "dishes": [
            {"letter":"3","name":"Heat-to-Eat Ratatouille","strategy":"COLD","volume":25}
          ]}
       ]
     },
     "Ankit Gaharwar": {
-      "shift": "Tue 22:00 â Wed 06:00",
+      "shift": "Tue 22:00 → Wed 06:00",
       "role": "Shift leader",
       "tasks": [
-        {"station": "COLD assembly", "window": "00:00â04:00",
+        {"station": "COLD assembly", "window": "00:00–04:00",
          "dishes": [
            {"letter":"A","name":"Mexican Barley & Quinoa Bowl","strategy":"COLD","volume":55},
            {"letter":"B","name":"Grilled Halloumi & Pearl Barley","strategy":"COLD","volume":75}
          ]},
-        {"station": "STRONG cook (mise)", "window": "05:00â06:00",
+        {"station": "STRONG cook (mise)", "window": "05:00–06:00",
          "dishes": [
-           {"letter":"P","name":"Chicken Korma â mise + cook start","strategy":"STRONG","volume":85},
-           {"letter":"Y","name":"Rajma Chawal â mise + cook start","strategy":"STRONG","volume":60}
+           {"letter":"P","name":"Chicken Korma — mise + cook start","strategy":"STRONG","volume":85},
+           {"letter":"Y","name":"Rajma Chawal — mise + cook start","strategy":"STRONG","volume":60}
          ]}
       ]
     },
     "Sreekant Goud": {
-      "shift": "Wed 01:30 â 09:30",
+      "shift": "Wed 01:30 → 09:30",
       "role": "Operator",
       "tasks": [
-        {"station": "COLD assembly", "window": "01:30â04:00",
+        {"station": "COLD assembly", "window": "01:30–04:00",
          "dishes": [
            {"letter":"3","name":"Heat-to-Eat Ratatouille","strategy":"COLD","volume":25}
          ]},
-        {"station": "STRONG cook", "window": "05:00â06:30",
+        {"station": "STRONG cook", "window": "05:00–06:30",
          "dishes": [
            {"letter":"S","name":"Thai Yellow Vegan Curry","strategy":"STRONG","volume":40},
            {"letter":"T","name":"Thai Green Chicken Curry","strategy":"STRONG","volume":50},
            {"letter":"U","name":"Phanaeng Curry (XL)","strategy":"STRONG","volume":40}
          ]},
-        {"station": "STRONG assembly", "window": "06:30â07:30",
+        {"station": "STRONG assembly", "window": "06:30–07:30",
          "dishes": [
            {"letter":"V","name":"B&B Butter Chicken + Rice & Naan","strategy":"STRONG","volume":125}
          ]}
       ]
     },
     "Varush Alladi": {
-      "shift": "Wed 01:30 â 09:30",
+      "shift": "Wed 01:30 → 09:30",
       "role": "Operator",
       "tasks": [
-        {"station": "COLD assembly finish", "window": "01:30â04:00",
+        {"station": "COLD assembly finish", "window": "01:30–04:00",
          "dishes": [
            {"letter":"F","name":"Sweet Potato Goat Cheese Salad","strategy":"COLD","volume":80}
          ]},
-        {"station": "STRONG cook", "window": "05:00â06:30",
+        {"station": "STRONG cook", "window": "05:00–06:30",
          "dishes": [
            {"letter":"V","name":"B&B Butter Chicken + Rice & Naan","strategy":"STRONG","volume":125},
            {"letter":"O","name":"Gyoza Korean Bowl","strategy":"STRONG","volume":50}
          ]},
-        {"station": "WEAK cook+assembly", "window": "06:45â07:30",
+        {"station": "WEAK cook+assembly", "window": "06:45–07:30",
          "dishes": [
            {"letter":"W","name":"Bacon Cheeseburger","strategy":"WEAK","volume":60},
            {"letter":"X","name":"Parmigiana","strategy":"WEAK","volume":50}
@@ -280,24 +302,24 @@ const TASKS_DATA = {
       ]
     },
     "Hamid Khan": {
-      "shift": "Wed 01:30 â 09:30",
+      "shift": "Wed 01:30 → 09:30",
       "role": "Shift leader",
       "tasks": [
-        {"station": "COLD assembly supervise", "window": "01:30â04:00",
+        {"station": "COLD assembly supervise", "window": "01:30–04:00",
          "dishes": []},
-        {"station": "STRONG cook", "window": "05:00â06:30",
+        {"station": "STRONG cook", "window": "05:00–06:30",
          "dishes": [
            {"letter":"P","name":"Chicken Korma","strategy":"STRONG","volume":85},
            {"letter":"Q","name":"Ragout Bolognese","strategy":"STRONG","volume":30},
            {"letter":"K","name":"Meatballs with Garden's Veggies","strategy":"STRONG","volume":30},
            {"letter":"Y","name":"Rajma Chawal","strategy":"STRONG","volume":60}
          ]},
-        {"station": "WEAK cook+assembly (lead)", "window": "06:45â07:30",
+        {"station": "WEAK cook+assembly (lead)", "window": "06:45–07:30",
          "dishes": [
            {"letter":"R","name":"Red Pesto Pasta","strategy":"WEAK","volume":30}
          ]},
-        {"station": "HACCP + Cambro preheat", "window": "07:15â07:45", "dishes": []},
-        {"station": "Cambro load + Dispatch", "window": "07:30â09:30", "dishes": []}
+        {"station": "HACCP + Cambro preheat", "window": "07:15–07:45", "dishes": []},
+        {"station": "Cambro load + Dispatch", "window": "07:30–09:30", "dishes": []}
       ]
     }
   }
@@ -327,8 +349,8 @@ function renderPicker() {
       <div class="op-grid">${links}</div>
     </div>
     <div class="haccp-banner">
-      <strong>HACCP SOP:</strong> Core â¥75Â°C after cook Â· Cabinet 75â80Â°C Â· Core â¥70Â°C at load Â·
-      Cambro preheated 10â15 min Â· Transit â¤4h Â· Dispatch by 09:30
+      <strong>HACCP SOP:</strong> Core ≥75°C after cook · Cabinet 75–80°C · Core ≥70°C at load ·
+      Cambro preheated 10–15 min · Transit ≤4h · Dispatch by 09:30
     </div>
   `;
 }
@@ -338,13 +360,13 @@ function renderOperator(name) {
   if (!data) {
     return `<div class="empty">
       <p><strong>${escHtml(name)}</strong> not found in today's roster.</p>
-      <p><a href="?">â Back to name list</a></p>
+      <p><a href="?">← Back to name list</a></p>
     </div>`;
   }
   const tasksHtml = data.tasks.map((task, ti) => {
     const dishes = task.dishes || [];
     const dishRows = dishes.length === 0
-      ? `<div style="font-size:12px; color:var(--mut); padding:8px 0;">Team-wide station â no specific dishes assigned</div>`
+      ? `<div style="font-size:12px; color:var(--mut); padding:8px 0;">Team-wide station — no specific dishes assigned</div>`
       : dishes.map((d, di) => {
           const key = checkboxKey(name, ti, di);
           return `
@@ -358,7 +380,11 @@ function renderOperator(name) {
                 </div>
               </div>
               <div class="vol">${d.volume}</div>
-              <div class="check" data-key="${key}" onclick="toggleCheck(this)">â</div>
+              <div class="check" data-key="${key}" data-kind="dish"
+                   data-op="${escHtml(name)}" data-label="${escHtml(d.name)}"
+                   data-letter="${escHtml(d.letter)}" data-station="${escHtml(task.station)}"
+                   role="checkbox" tabindex="0" aria-label="Done: ${escHtml(d.name)}"
+                   onclick="toggleCheck(this)">✓</div>
             </div>
           `;
         }).join('');
@@ -377,7 +403,10 @@ function renderOperator(name) {
     const key = `kt_haccp_${TASKS_DATA.date}_${name}_${i}`;
     return `
       <div class="haccp-item">
-        <div class="check" data-key="${key}" onclick="toggleCheck(this)">â</div>
+        <div class="check" data-key="${key}" data-kind="haccp"
+             data-op="${escHtml(name)}" data-label="${escHtml(item)}"
+             role="checkbox" tabindex="0" aria-label="Confirm: ${escHtml(item)}"
+             onclick="toggleCheck(this)">✓</div>
         <div class="label">${escHtml(item)}</div>
       </div>
     `;
@@ -385,36 +414,192 @@ function renderOperator(name) {
 
   return `
     <div class="op-header">
-      <h2>ð¤ ${escHtml(name)}</h2>
-      <div class="meta">${escHtml(data.role)} Â· Shift ${escHtml(data.shift)}</div>
+      <h2>👤 ${escHtml(name)}</h2>
+      <div class="meta">${escHtml(data.role)} · Shift ${escHtml(data.shift)}</div>
     </div>
     ${tasksHtml}
     <div class="haccp-card">
-      <h3>ð HACCP Checklist</h3>
+      <h3>📋 HACCP Checklist</h3>
       ${haccpHtml}
     </div>
     <div style="text-align:center; margin-top:16px;">
-      <a href="?" style="color:var(--accent); font-size:13px;">â Switch operator</a>
+      <a href="?" style="color:var(--accent); font-size:13px;">← Switch operator</a>
     </div>
   `;
+}
+
+// ============================================================================
+// Durable recording of checks
+//
+// Until now every tick lived ONLY in this browser's localStorage. That is not a
+// record: it dies with the device, is invisible to anyone else, and cannot be
+// produced for an audit. HACCP monitoring is exactly the thing that has to be
+// retained and reviewable, so each tick is now also appended to the sheet.
+//
+// localStorage is kept as the instant UI state, and every check goes through an
+// append-only outbox that survives a reload and retries until it lands. This
+// shift runs 21:00-04:00 on kitchen wifi, so "the network was down" must never
+// mean "the check was not recorded".
+//
+// Unticks are recorded too, as their own row. An audit trail that silently drops
+// a retraction is worse than no trail.
+// ============================================================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+const APP_VERSION = "2026.07.31";
+const OUTBOX_KEY = "kt_outbox_v1";
+const DEVICE_KEY = "kt_device_v1";
+
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+
+function randomId() {
+  try {
+    if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    if (window.crypto && crypto.getRandomValues) {
+      const a = new Uint8Array(16); crypto.getRandomValues(a);
+      return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) { /* fall through */ }
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+// Which phone recorded this. Useful when two people share a device, or when a
+// check needs tracing back after the fact.
+function deviceId() {
+  let d = lsGet(DEVICE_KEY);
+  if (!d) { d = randomId(); lsSet(DEVICE_KEY, d); }
+  return d;
+}
+
+function readOutbox() {
+  const raw = lsGet(OUTBOX_KEY);
+  if (!raw) return [];
+  try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; }
+  catch (e) { lsDel(OUTBOX_KEY); return []; }
+}
+function writeOutbox(a) { lsSet(OUTBOX_KEY, JSON.stringify(a)); }
+
+function updatePendingBadge() {
+  const el = document.getElementById('pendingBadge');
+  if (!el) return;
+  const n = readOutbox().length;
+  el.textContent = n ? (n + ' check' + (n === 1 ? '' : 's') + ' not yet saved — keep this page open')
+                     : '';
+  el.className = n ? 'pending visible' : 'pending';
+}
+
+let flushing = false;
+async function flushOutbox() {
+  if (flushing) return;
+  const queue = readOutbox();
+  if (!queue.length) return;
+  flushing = true;
+  try {
+    // Oldest first, and stop at the first failure so ordering is preserved and we
+    // do not hammer a dead network with the whole backlog.
+    while (readOutbox().length) {
+      const q = readOutbox();
+      const item = q[0];
+      let ok = false;
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST', redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(item)
+        });
+        if (res.ok) {
+          const body = await res.text();
+          // Same contract as the assembly form: an Apps Script that throws
+          // returns an HTML error page with status 200, so the body decides.
+          ok = !/<html|Exception|ScriptError|errorMessage|"status"\s*:\s*"error"|"ok"\s*:\s*false/i.test(body);
+        }
+      } catch (e) { ok = false; }
+
+      if (!ok) break;
+      const cur = readOutbox();
+      // The item we just sent is identified by id, not position: a tick during
+      // the await would otherwise let shift() drop the wrong entry.
+      writeOutbox(cur.filter(x => x.checkId !== item.checkId));
+      updatePendingBadge();
+    }
+  } finally {
+    flushing = false;
+    updatePendingBadge();
+  }
+}
+
+function recordCheck(el, done) {
+  const item = {
+    type: 'haccp_check',
+    checkId: randomId(),
+    planDate: TASKS_DATA.date,
+    kitchen: TASKS_DATA.kitchen || '',
+    week: TASKS_DATA.week || '',
+    operator: el.getAttribute('data-op') || '',
+    checkKind: el.getAttribute('data-kind') || '',
+    checkKey: el.getAttribute('data-key') || '',
+    label: el.getAttribute('data-label') || '',
+    dishLetter: el.getAttribute('data-letter') || '',
+    station: el.getAttribute('data-station') || '',
+    done: !!done,
+    clientTime: new Date().toISOString(),
+    tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } })(),
+    device: deviceId(),
+    appVersion: APP_VERSION
+  };
+  const q = readOutbox();
+  q.push(item);
+  writeOutbox(q);
+  updatePendingBadge();
+  flushOutbox();
 }
 
 function toggleCheck(el) {
   const key = el.getAttribute('data-key');
   const done = el.classList.toggle('done');
-  try {
-    if (done) localStorage.setItem(key, '1');
-    else localStorage.removeItem(key);
-  } catch (e) { /* storage may be disabled */ }
+  if (done) lsSet(key, '1'); else lsDel(key);
+  recordCheck(el, done);
 }
 
 function restoreChecks() {
-  try {
-    [...document.querySelectorAll('.check')].forEach(el => {
-      const key = el.getAttribute('data-key');
-      if (localStorage.getItem(key)) el.classList.add('done');
-    });
-  } catch (e) { /* ignore */ }
+  [...document.querySelectorAll('.check')].forEach(el => {
+    if (lsGet(el.getAttribute('data-key'))) el.classList.add('done');
+  });
+  updatePendingBadge();
+  flushOutbox();
+}
+
+// Retry whenever the network comes back, and on a slow timer as a backstop for
+// phones that never fire the online event.
+window.addEventListener('online', flushOutbox);
+setInterval(flushOutbox, 60000);
+
+// How many days old is this plan? TASKS_DATA is supposed to be regenerated by a
+// scheduled task, but that task has not run since the date below. Showing a stale
+// shift plan silently is the dangerous failure: staff would work yesterday's
+// stations and tick today's boxes against them. So say so, loudly, at the top.
+function planAgeDays() {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(TASKS_DATA.date || ''));
+  if (!m) return null;
+  const plan = new Date(+m[1], +m[2] - 1, +m[3]);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((today - plan) / 86400000);
+}
+
+function renderStaleWarning() {
+  const age = planAgeDays();
+  if (age === null || age <= 0) return '';        // today or a future plan: fine
+  const dayWord = age === 1 ? 'day' : 'days';
+  const sev = age >= 2 ? 'stale-hard' : 'stale-soft';
+  return `
+    <div class="stale ${sev}" role="alert">
+      <strong>⚠️ This plan is ${age} ${dayWord} old</strong> (${escHtml(TASKS_DATA.date)}).
+      It is not today's stations, volumes or roster. Check with your shift leader
+      before working from it — and note any checks you tick are recorded against
+      that old plan date.
+    </div>`;
 }
 
 // Boot
@@ -425,13 +610,12 @@ function restoreChecks() {
   const sub = document.getElementById('headerSub');
   const dateSpan = document.getElementById('dataDate');
   dateSpan.textContent = TASKS_DATA.date;
-  sub.textContent = `Berlin Â· ${TASKS_DATA.date} Â· ${TASKS_DATA.week}`;
+  sub.textContent = `Berlin · ${TASKS_DATA.date} · ${TASKS_DATA.week}`;
 
-  if (op) {
-    app.innerHTML = renderOperator(op);
-  } else {
-    app.innerHTML = renderPicker();
-  }
+  const body = op ? renderOperator(op) : renderPicker();
+  app.innerHTML = renderStaleWarning()
+    + '<div id="pendingBadge" class="pending"></div>'
+    + body;
   restoreChecks();
 })();
 </script>

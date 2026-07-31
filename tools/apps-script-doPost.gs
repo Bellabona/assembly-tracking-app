@@ -74,6 +74,14 @@ function doPost(e) {
 
     var data = JSON.parse(e.postData.contents);
 
+    // --- HACCP checks from kitchen-tasks.html ------------------------------
+    // Those ticks used to live only in one phone's localStorage, which is not a
+    // retainable record. They now post here. Append-only, including unticks: an
+    // audit trail that drops a retraction is worse than no trail.
+    if (data.type === 'haccp_check') {
+      return jsonOut({ ok: true, status: 'ok', row: appendHaccpCheck_(data) });
+    }
+
     // --- Idempotency -------------------------------------------------------
     // The client sends one entryId per attempt and reuses it across retries, so
     // a double tap or a retry after an ambiguous failure lands here twice with
@@ -123,6 +131,44 @@ function doPost(e) {
 
 /** Name of the additive per-dish tab. Your existing sheet is never touched. */
 var ITEMS_SHEET = 'AssemblyItems';
+
+/** Append-only log of HACCP ticks from kitchen-tasks.html. */
+var HACCP_SHEET = 'HaccpChecks';
+
+
+function haccpHeader_() {
+  return ['recorded_at', 'plan_date', 'kitchen', 'week', 'operator',
+          'check_kind', 'station', 'dish_letter', 'label', 'done',
+          'client_time', 'tz', 'device', 'check_id', 'app_version'];
+}
+
+
+/**
+ * Appends one row per tick or untick. Returns the row number written.
+ *
+ * Deliberately append-only rather than one row per check that gets overwritten:
+ * for monitoring records you want the history, including who unticked what and
+ * when. `check_id` makes each row individually traceable and lets the client
+ * retry safely -- a replay is a rare duplicate row in a log, which is harmless,
+ * whereas a dropped check is not.
+ */
+function appendHaccpCheck_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(HACCP_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(HACCP_SHEET);
+    sh.appendRow(haccpHeader_());
+    sh.setFrozenRows(1);
+  }
+  sh.appendRow([
+    new Date(), data.planDate || '', data.kitchen || '', data.week || '',
+    data.operator || '', data.checkKind || '', data.station || '',
+    data.dishLetter || '', data.label || '', data.done ? 'YES' : 'no',
+    data.clientTime || '', data.tz || '', data.device || '',
+    data.checkId || '', data.appVersion || ''
+  ]);
+  return sh.getLastRow();
+}
 
 
 /**

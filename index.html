@@ -89,6 +89,12 @@
     color: var(--text); line-height: 1.1;
   }
   .header-date { font-size: 11px; font-weight: 600; color: var(--accent); margin-top: 2px; letter-spacing: 0.3px; }
+  .header-link {
+    display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.2px;
+    padding: 2px 0;   /* keeps the tap target reachable without moving the layout */
+  }
+  .header-link:hover, .header-link:focus-visible { color: var(--accent2); }
 
   /* Content */
   .content {
@@ -359,6 +365,9 @@
   <div class="header-right">
     <div class="header-title">Assembly Tracking</div>
     <div class="header-date" id="headerDate"></div>
+    <!-- The kitchen-tasks page went 100 days without an update partly because
+         nothing linked to it. Reachable now. -->
+    <a class="header-link" href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
   </div>
 </header>
 
