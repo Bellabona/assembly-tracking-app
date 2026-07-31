@@ -82,6 +82,15 @@ function doPost(e) {
       return jsonOut({ ok: true, status: 'ok', row: appendHaccpCheck_(data) });
     }
 
+    // --- Undo, from the 60s window after a save ----------------------------
+    // Marks the entry void rather than deleting rows. An append-only log is what
+    // makes this sheet trustworthy: a silent delete would change numbers under
+    // anyone who had already read them, and would leave no trace that an entry
+    // ever existed. Filter voided = "" in reports to exclude them.
+    if (data.type === 'void_entry') {
+      return jsonOut({ ok: true, status: 'ok', voided: voidEntry_(data) });
+    }
+
     // --- Idempotency -------------------------------------------------------
     // The client sends one entryId per attempt and reuses it across retries, so
     // a double tap or a retry after an ambiguous failure lands here twice with
@@ -194,8 +203,39 @@ function alreadyRecorded_(entryId) {
 
 function itemsHeader_() {
   return ['recorded_at', 'entry_date', 'employee', 'role',
-          'dish_letter', 'dish_name', 'qty',
-          'comment', 'entry_id', 'client_time', 'tz', 'app_version'];
+          'dish_letter', 'dish_name', 'qty', 'waste',
+          'start_time', 'end_time', 'shift_minutes',
+          'comment', 'entry_id', 'client_time', 'tz', 'app_version', 'voided'];
+}
+
+
+/**
+ * Marks every AssemblyItems row for an entryId as void. Returns how many rows.
+ *
+ * Nothing is deleted, so the log stays append-only and an undo is itself visible.
+ * Exclude voided rows in reports with a `voided = ""` filter.
+ */
+function voidEntry_(data) {
+  if (!data.entryId) return 0;
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ITEMS_SHEET);
+  if (!sh || sh.getLastRow() < 2) return 0;
+
+  var header = itemsHeader_();
+  var idCol    = header.indexOf('entry_id') + 1;
+  var voidCol  = header.indexOf('voided') + 1;
+  if (idCol < 1 || voidCol < 1) return 0;
+
+  var n = sh.getLastRow() - 1;
+  var ids = sh.getRange(2, idCol, n, 1).getValues();
+  var stamp = 'VOID ' + new Date().toISOString() + ' (' + (data.reason || 'undo') + ')';
+  var count = 0;
+  for (var i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) === String(data.entryId)) {
+      sh.getRange(2 + i, voidCol).setValue(stamp);
+      count++;
+    }
+  }
+  return count;
 }
 
 
@@ -237,9 +277,12 @@ function appendItemRows_(data) {
   var employee = (data.employees || []).join(', ');
   var rows = items.map(function (it) {
     return [now, data.date || '', employee, data.role || '',
-            it.letter || '', it.dish || '', Number(it.qty) || 0,
+            it.letter || '', it.dish || '', Number(it.qty) || 0, Number(it.waste) || 0,
+            data.startTime || '', data.endTime || '',
+            (typeof data.shiftMinutes === 'number' ? data.shiftMinutes : ''),
             data.comment || '', data.entryId || '',
-            data.clientTime || '', data.tz || '', data.appVersion || ''];
+            data.clientTime || '', data.tz || '', data.appVersion || '',
+            ''];   // voided: empty until an undo stamps it
   });
 
   // One setValues beats N appendRow calls: fewer round trips, and the block

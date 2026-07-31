@@ -301,6 +301,57 @@
   }
   .glove-toggle[aria-pressed="true"] { color: var(--accent); }
 
+  /* Shift hours */
+  .time-row { display: flex; gap: 9px; }
+  .time-pill {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 11px 13px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: var(--glass-shadow); transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .time-pill:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(142,219,90,0.18); }
+  .time-pill label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--muted); flex-shrink: 0;
+  }
+  input[type="time"] {
+    background: none; border: none; color: var(--text);
+    font-size: 16px; font-weight: 700; flex: 1; min-width: 0;
+    outline: none; cursor: pointer; color-scheme: dark; font-family: inherit;
+  }
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(74%) sepia(38%) saturate(560%) hue-rotate(48deg); cursor: pointer;
+  }
+  .rate-line {
+    min-height: 0; font-size: 12px; font-weight: 700; color: var(--accent2);
+    margin-top: 9px; letter-spacing: 0.2px;
+  }
+  .rate-line.warn { color: #F0A34A; }
+  body.glove .time-pill { padding: 15px 15px; }
+  body.glove input[type="time"] { font-size: 19px; }
+
+  /* Undo window after a save */
+  .undo-wrap { margin-top: 18px; min-height: 44px; }
+  .btn-undo {
+    padding: 12px 26px; border-radius: 999px;
+    border: 1px solid rgba(255,107,107,0.45);
+    background: rgba(255,107,107,0.12); color: #ff9b9b;
+    font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit;
+  }
+  .btn-undo:hover { background: rgba(255,107,107,0.2); }
+  .btn-undo:disabled { opacity: 0.5; cursor: default; }
+
+  /* Already-submitted-today warning */
+  .dupe-banner { display: none; }
+  .dupe-banner.visible {
+    display: block; margin: 0 0 4px;
+    background: rgba(240,163,74,0.14); color: #F0A34A;
+    border: 1px solid rgba(240,163,74,0.42);
+    border-radius: 12px; padding: 11px 14px; font-size: 13px;
+    font-weight: 600; line-height: 1.45;
+  }
+
   /* Role tabs */
   .role-tabs { display: flex; gap: 9px; }
   .role-tab {
@@ -455,6 +506,7 @@
 <div class="content" id="formSection">
 
   <div class="queue-banner" id="queueBanner" role="status" aria-live="polite"></div>
+  <div class="dupe-banner" id="dupeBanner" role="status" aria-live="polite"></div>
 
   <div class="section-label">Date</div>
   <div class="date-pill">
@@ -467,6 +519,19 @@
 
   <div class="section-label">Dishes assembled (A&#8211;Z)</div>
   <div class="dishes" id="dishes"></div>
+
+  <div class="section-label">Shift hours <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(for dishes per hour)</span></div>
+  <div class="time-row">
+    <div class="time-pill">
+      <label for="startTime">From</label>
+      <input type="time" id="startTime" step="300">
+    </div>
+    <div class="time-pill">
+      <label for="endTime">To</label>
+      <input type="time" id="endTime" step="300">
+    </div>
+  </div>
+  <div class="rate-line" id="rateLine"></div>
 
   <div class="section-label">Role</div>
   <div class="role-tabs" id="roleTabs">
@@ -487,6 +552,7 @@
   <div class="success-title">Saved!</div>
   <div class="success-detail" id="successDetail"></div>
   <button class="btn-again" onclick="resetForm()">+ New Entry</button>
+  <div class="undo-wrap"><button class="btn-undo" id="undoBtn" onclick="undoLast()" hidden>Undo this entry</button></div>
 </div>
 
 <div class="submit-bar" id="submitBar">
@@ -617,6 +683,7 @@ EMPLOYEES.forEach(name => {
       setRolesEnabled(true);
     }
     saveDraft();
+    updateDupeBanner();   // the warning is per person, so it moves with the chip
   });
   empBox.appendChild(chip);
 });
@@ -716,6 +783,7 @@ DISH_LETTERS.forEach(letter => {
     div.classList.toggle("has-value", parseCount(inp.value) > 0);
     div.classList.toggle("has-waste", parseCount(wasteInp.value) > 0);
     updateTotal();
+    updateRate();       // dishes/hour depends on the total, so it moves with it
     saveDraft();
   }
   inp.addEventListener("input", refreshTile);
@@ -846,6 +914,9 @@ function submitForm() {
     role: rolesStr, comment,
     items: items,
     totalWaste: totalWaste,
+    startTime: document.getElementById("startTime").value || "",
+    endTime: document.getElementById("endTime").value || "",
+    shiftMinutes: shiftMinutes(),
     entryId: btn.dataset.entryId,
     clientTime: new Date().toISOString(),
     tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -863,6 +934,8 @@ function submitForm() {
     const body = await res.text();
     if (looksLikeSaveFailure(body)) throw new Error("the sheet rejected the entry");
     clearDraft();
+    noteSent(date, selectedEmployees[0], currentTotal(), payload.entryId);
+    armUndo(payload);
     // Saved, so the next submit is a genuinely different entry and must not reuse
     // this id -- otherwise the server would dedupe a real second shift away.
     delete btn.dataset.entryId;
@@ -893,6 +966,80 @@ function submitForm() {
     const reason = (err && err.message) ? err.message : "no connection";
     showError("\u274C NOT saved \u2014 " + reason + ". Your numbers are still on screen: check the connection and tap Submit Entry again. If it keeps failing, report it before closing this page.");
     btn.disabled = false; btn.textContent = "Submit Entry";
+  });
+}
+
+// --- Undo -------------------------------------------------------------------
+// There is no edit path at all, so a mis-tapped submit is permanent. A short
+// window to retract one is cheap and removes the worst consequence of a mistake.
+//
+// It marks the entry void rather than deleting rows: an append-only log is what
+// makes the sheet trustworthy, and a silent delete would let numbers change under
+// anyone who had already read them.
+let undoState = null;
+let undoTimer = null;
+const UNDO_SECONDS = 60;
+
+function armUndo(payload) {
+  undoState = { payload: payload, expires: Date.now() + UNDO_SECONDS * 1000 };
+  const btn = document.getElementById("undoBtn");
+  if (!btn) return;
+  btn.hidden = false;
+  btn.disabled = false;
+  if (undoTimer) clearInterval(undoTimer);
+  const tick = () => {
+    if (!undoState) return;
+    const left = Math.ceil((undoState.expires - Date.now()) / 1000);
+    if (left <= 0) { disarmUndo(); return; }
+    btn.textContent = "Undo this entry (" + left + "s)";
+  };
+  tick();
+  undoTimer = setInterval(tick, 1000);
+}
+
+function disarmUndo() {
+  undoState = null;
+  if (undoTimer) { clearInterval(undoTimer); undoTimer = null; }
+  const btn = document.getElementById("undoBtn");
+  if (btn) { btn.hidden = true; btn.textContent = "Undo this entry"; }
+}
+
+function undoLast() {
+  if (!undoState) return;
+  const btn = document.getElementById("undoBtn");
+  const p = undoState.payload;
+  btn.disabled = true;
+  btn.textContent = "Undoing…";
+  fetch(SCRIPT_URL, {
+    method: "POST", redirect: "follow",
+    headers: {"Content-Type": "text/plain;charset=utf-8"},
+    body: JSON.stringify({ type: "void_entry", entryId: p.entryId, date: p.date,
+                           employees: p.employees, reason: "undo by user",
+                           clientTime: new Date().toISOString(), appVersion: APP_VERSION })
+  })
+  .then(async res => {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const body = await res.text();
+    if (looksLikeSaveFailure(body)) throw new Error("the sheet refused the undo");
+    // Drop it from the local "already submitted today" memory too, or the next
+    // entry would warn about an entry that no longer counts.
+    try {
+      const kept = readLastSent().filter(x => x.entryId !== p.entryId);
+      localStorage.setItem(LASTSENT_KEY, JSON.stringify(kept));
+    } catch (e) { /* ignore */ }
+    disarmUndo();
+    const title = document.querySelector(".success-title");
+    const ring = document.querySelector(".success-ring");
+    if (ring) ring.textContent = "↩";
+    if (title) title.textContent = "Entry undone";
+    document.getElementById("successDetail").innerHTML =
+      "That entry has been marked void in the sheet.<br>Tap <strong>+ New Entry</strong> to record it again.";
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.textContent = "Undo failed — tap to retry";
+    showError("⚠️ Could not undo — " + ((err && err.message) || "no connection")
+      + ". The entry is still recorded. Tell your shift leader if it is wrong.");
   });
 }
 
@@ -944,7 +1091,10 @@ function resetForm() {
   document.getElementById("submitBar").style.display = "";
   clearError();
   clearDraft();
+  disarmUndo();          // the window belongs to the entry just left behind
   updateTotal();
+  updateRate();
+  updateDupeBanner();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1007,6 +1157,8 @@ function saveDraft() {
     employee: chip ? chip.dataset.name : "",
     roles: getSelectedRoles(),
     comment: document.getElementById("comment").value,
+    startTime: document.getElementById("startTime").value,
+    endTime: document.getElementById("endTime").value,
     counts: counts,
     wastes: wastes
   };
@@ -1037,6 +1189,8 @@ function restoreDraft() {
   if (!draft) return;
   if (draft.date) document.getElementById("date").value = draft.date;
   if (draft.comment) document.getElementById("comment").value = draft.comment;
+  if (draft.startTime) document.getElementById("startTime").value = draft.startTime;
+  if (draft.endTime) document.getElementById("endTime").value = draft.endTime;
   const counts = draft.counts || {};
   const wastes = draft.wastes || {};
   DISH_LETTERS.forEach(l => {
@@ -1086,6 +1240,83 @@ function looksLikeSaveFailure(body) {
     return false;
   }
   return /<html|Exception|ScriptError|errorMessage/i.test(text);
+}
+
+// --- Shift hours, so throughput is derivable ---------------------------------
+// Counts alone cannot answer "dishes per hour", which is the number that makes
+// this data actionable. Two optional time fields are the cheapest way to get it:
+// a start/stop timer sounds tidier but breaks the moment someone forgets to stop
+// it, and a half-finished timer is worse than a blank field.
+//
+// Overnight shifts are the normal case here (kitchen-tasks shows 21:00-04:00), so
+// an end time earlier than the start means "crossed midnight", not "typo".
+function shiftMinutes() {
+  const s = document.getElementById("startTime").value;
+  const e = document.getElementById("endTime").value;
+  if (!s || !e) return null;
+  const [sh, sm] = s.split(":").map(Number);
+  const [eh, em] = e.split(":").map(Number);
+  if ([sh, sm, eh, em].some(n => !isFinite(n))) return null;
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) mins += 24 * 60;        // overnight shift
+  return mins;
+}
+
+function updateRate() {
+  const el = document.getElementById("rateLine");
+  if (!el) return;
+  const mins = shiftMinutes();
+  const total = currentTotal();
+  el.classList.remove("warn");
+  if (mins === null) { el.textContent = ""; return; }
+  const hrs = mins / 60;
+  // A 16h+ span almost always means one of the two fields is wrong, and a bad
+  // duration silently poisons every throughput number built on it later.
+  if (hrs > 16) {
+    el.textContent = "Shift looks like " + hrs.toFixed(1) + "h — please check the times.";
+    el.classList.add("warn");
+    return;
+  }
+  const label = Math.floor(mins / 60) + "h " + String(mins % 60).padStart(2, "0") + "m";
+  el.textContent = total > 0
+    ? label + "  ·  " + (total / hrs).toFixed(1) + " dishes/hour"
+    : label;
+}
+
+// --- Already submitted today -------------------------------------------------
+// There is no edit path, so a second entry for the same person on the same day is
+// usually someone who forgot they already submitted. Warn, do not block: a
+// genuine second shift entry is legitimate and the app must not refuse it.
+const LASTSENT_KEY = "bb_last_sent_v1";
+
+function readLastSent() {
+  try {
+    const a = JSON.parse(localStorage.getItem(LASTSENT_KEY) || "[]");
+    return Array.isArray(a) ? a : [];
+  } catch (e) { return []; }
+}
+function noteSent(date, employee, total, entryId) {
+  const a = readLastSent().filter(x => x.date === getTodayLocal());   // today only
+  // entryId is stored so an undo can remove the matching record: otherwise the
+  // next entry would warn about a submission that has since been voided.
+  a.push({ date: date, employee: employee, total: total, at: Date.now(), entryId: entryId || "" });
+  try { localStorage.setItem(LASTSENT_KEY, JSON.stringify(a.slice(-20))); } catch (e) {}
+}
+function updateDupeBanner() {
+  const el = document.getElementById("dupeBanner");
+  if (!el) return;
+  const chip = document.querySelector(".emp-chip.checked");
+  const date = document.getElementById("date").value;
+  if (!chip || !date) { el.classList.remove("visible"); return; }
+  const prior = readLastSent().filter(x => x.date === date && x.employee === chip.dataset.name);
+  if (!prior.length) { el.classList.remove("visible"); return; }
+  const last = prior[prior.length - 1];
+  const t = new Date(last.at);
+  const hh = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+  el.textContent = chip.dataset.name + " already submitted " + last.total
+    + (last.total === 1 ? " dish" : " dishes") + " for this date at " + hh
+    + ". If this is a second shift, carry on — otherwise you may be double-counting.";
+  el.classList.add("visible");
 }
 
 // --- Glove mode --------------------------------------------------------------
@@ -1198,10 +1429,16 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-document.getElementById("date").addEventListener("change", saveDraft);
+document.getElementById("date").addEventListener("change", () => { saveDraft(); updateDupeBanner(); });
 document.getElementById("comment").addEventListener("input", saveDraft);
+["startTime","endTime"].forEach(id => {
+  document.getElementById(id).addEventListener("change", () => { updateRate(); saveDraft(); });
+  document.getElementById(id).addEventListener("input", updateRate);
+});
 restoreDraft();
 updateTotal();
+updateRate();
+updateDupeBanner();
 updateQueueBanner();
 flushQueue();
 </script>
