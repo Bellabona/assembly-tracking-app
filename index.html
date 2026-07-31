@@ -301,6 +301,17 @@
   }
   .glove-toggle[aria-pressed="true"] { color: var(--accent); }
 
+  .lang-row { display: inline-flex; gap: 4px; margin-top: 4px; margin-left: 10px; }
+  .lang-btn {
+    min-width: 30px; padding: 3px 6px; border-radius: 7px;
+    border: 1px solid var(--border2); background: rgba(255,255,255,0.05);
+    color: var(--muted); font-size: 10px; font-weight: 800;
+    font-family: inherit; cursor: pointer; letter-spacing: 0.4px;
+  }
+  .lang-btn[aria-pressed="true"] {
+    border-color: var(--accent); background: rgba(142,219,90,0.18); color: var(--accent2);
+  }
+
   /* Shift hours */
   .time-row { display: flex; gap: 9px; }
   .time-pill {
@@ -497,10 +508,14 @@
     <div class="header-date" id="headerDate"></div>
     <!-- The kitchen-tasks page went 100 days without an update partly because
          nothing linked to it. Reachable now. -->
-    <a class="header-link" href="summary.html">Summary &rsaquo;</a>
-    <a class="header-link" href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
+    <a class="header-link" id="linkSummary" href="summary.html">Summary &rsaquo;</a>
+    <a class="header-link" id="linkTasks" href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
     <button type="button" class="glove-toggle" id="gloveToggle"
             aria-pressed="false" onclick="toggleGlove()">&#129508; Glove mode</button>
+    <div class="lang-row">
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="true"  onclick="setLang('en')">EN</button>
+      <button type="button" class="lang-btn" data-lang="de" aria-pressed="false" onclick="setLang('de')">DE</button>
+    </div>
   </div>
 </header>
 
@@ -509,39 +524,39 @@
   <div class="queue-banner" id="queueBanner" role="status" aria-live="polite"></div>
   <div class="dupe-banner" id="dupeBanner" role="status" aria-live="polite"></div>
 
-  <div class="section-label">Date</div>
+  <div class="section-label" id="labDate">Date</div>
   <div class="date-pill">
     <span class="icon">&#128197;</span>
     <input type="date" id="date">
   </div>
 
-  <div class="section-label">Team &#8212; tap your name</div>
+  <div class="section-label" id="labTeam">Team &#8212; tap your name</div>
   <div class="emp-scroll" id="employees"></div>
 
-  <div class="section-label">Dishes assembled (A&#8211;Z)</div>
+  <div class="section-label" id="labDishes">Dishes assembled (A&#8211;Z)</div>
   <div class="dishes" id="dishes"></div>
 
-  <div class="section-label">Shift hours <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(for dishes per hour)</span></div>
+  <div class="section-label" id="labHours">Shift hours <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(for dishes per hour)</span></div>
   <div class="time-row">
     <div class="time-pill">
-      <label for="startTime">From</label>
+      <label for="startTime" id="labFrom">From</label>
       <input type="time" id="startTime" step="300">
     </div>
     <div class="time-pill">
-      <label for="endTime">To</label>
+      <label for="endTime" id="labTo">To</label>
       <input type="time" id="endTime" step="300">
     </div>
   </div>
   <div class="rate-line" id="rateLine"></div>
 
-  <div class="section-label">Role</div>
+  <div class="section-label" id="labRole">Role</div>
   <div class="role-tabs" id="roleTabs">
     <div class="role-tab" data-role="Main">Main</div>
     <div class="role-tab" data-role="Assist">Assist</div>
     <div class="role-tab" data-role="Support">Support</div>
   </div>
 
-  <div class="section-label">Comment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></div>
+  <div class="section-label" id="labComment">Comment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></div>
   <textarea id="comment" placeholder="Any notes about this session&#8230;" rows="2"></textarea>
 
   <div class="error-msg" id="errorMsg"></div>
@@ -732,6 +747,53 @@ const MAX_PER_DISH = 400;
 // Bumped when the payload shape changes, so rows can be interpreted later.
 const APP_VERSION = "2026.07.31";
 
+// --- Language ----------------------------------------------------------------
+// German and English, per Abbas. Deliberately NOT auto-detected from the browser:
+// a shared kitchen phone would then show whatever the last person set, and a
+// silent language flip mid-shift is worse than an explicit choice. Remembered per
+// device, first load follows the browser only as an initial guess.
+const LANG_KEY = "bb_lang_v1";
+const STRINGS = {
+  en: {
+    title: "Assembly Tracking", summary: "Summary", tasks: "Kitchen tasks",
+    glove: "🧤 Glove mode", date: "Date", team: "Team — tap your name",
+    dishes: "Dishes assembled (A–Z)", hours: "Shift hours", hoursHint: "(for dishes per hour)",
+    from: "From", to: "To", role: "Role", comment: "Comment", optional: "(optional)",
+    commentPlaceholder: "Any notes about this session…", waste: "waste",
+    submit: "Submit Entry", saving: "Saving…", saved: "Saved!",
+    newEntry: "+ New Entry", undo: "Undo this entry", undoing: "Undoing…",
+    undone: "Entry undone", queuedTitle: "Saved on this phone",
+    total: "Total", dish: "dish", dishesWord: "dishes", perHour: "dishes/hour",
+    errDate: "Please select a date.", errName: "Please select your name.",
+    errWhole: "whole numbers only — no decimals, no minus.",
+    errMax: "that is higher than", errCheck: "please check the number.",
+    errOneDish: "Please enter a quantity for at least one dish.",
+    errRole: "Please select at least one role.",
+    checkTimes: "Shift looks like", checkTimesEnd: "— please check the times."
+  },
+  de: {
+    title: "Montage-Erfassung", summary: "Übersicht", tasks: "Küchenaufgaben",
+    glove: "🧤 Handschuhmodus", date: "Datum", team: "Team — Namen antippen",
+    dishes: "Montierte Gerichte (A–Z)", hours: "Arbeitszeit", hoursHint: "(für Gerichte pro Stunde)",
+    from: "Von", to: "Bis", role: "Rolle", comment: "Kommentar", optional: "(optional)",
+    commentPlaceholder: "Notizen zu dieser Schicht…", waste: "Ausschuss",
+    submit: "Eintrag senden", saving: "Speichern…", saved: "Gespeichert!",
+    newEntry: "+ Neuer Eintrag", undo: "Eintrag zurücknehmen", undoing: "Wird zurückgenommen…",
+    undone: "Eintrag zurückgenommen", queuedTitle: "Auf diesem Handy gespeichert",
+    total: "Gesamt", dish: "Gericht", dishesWord: "Gerichte", perHour: "Gerichte/Stunde",
+    errDate: "Bitte ein Datum auswählen.", errName: "Bitte deinen Namen auswählen.",
+    errWhole: "nur ganze Zahlen — keine Kommazahlen, kein Minus.",
+    errMax: "ist höher als", errCheck: "bitte die Zahl prüfen.",
+    errOneDish: "Bitte für mindestens ein Gericht eine Menge eingeben.",
+    errRole: "Bitte mindestens eine Rolle auswählen.",
+    checkTimes: "Schicht dauert", checkTimesEnd: "— bitte die Zeiten prüfen."
+  }
+};
+let LANG = "en";
+function t(key) {
+  return (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
+}
+
 // Dish names are written into this file by the weekly task and already contain
 // "&" ("Turkish Chickpeas & Spinach Tomato Stew", "Test&Tell: ..."). Anything
 // interpolated into innerHTML gets escaped rather than trusted.
@@ -920,20 +982,20 @@ function submitForm() {
   }
   // showError writes to textContent, so these must be real characters, not HTML
   // entities. Written as \uXXXX escapes to keep every byte of this file ASCII.
-  if (!date) { showError("\u26A0\uFE0F Please select a date."); return; }
-  if (selectedEmployees.length !== 1) { showError("\u26A0\uFE0F Please select your name."); return; }
-  if (notWhole) { showError("\u26A0\uFE0F Dish "+notWhole+": whole numbers only \u2014 no decimals, no minus."); return; }
-  if (tooMany) { showError("\u26A0\uFE0F Dish "+tooMany+": that is higher than "+MAX_PER_DISH+" \u2014 please check the number."); return; }
+  if (!date) { showError("\u26A0\uFE0F " + t("errDate")); return; }
+  if (selectedEmployees.length !== 1) { showError("\u26A0\uFE0F " + t("errName")); return; }
+  if (notWhole) { showError("\u26A0\uFE0F " + t("dish").replace(/^./, c=>c.toUpperCase()) + " " + notWhole + ": " + t("errWhole")); return; }
+  if (tooMany) { showError("\u26A0\uFE0F " + t("dish").replace(/^./, c=>c.toUpperCase()) + " " + tooMany + ": " + t("errMax") + " " + MAX_PER_DISH + " \u2014 " + t("errCheck")); return; }
   // items can be non-empty with dishes empty: a waste-only entry. That is a valid
   // thing to record, so gate on items rather than on assembled counts.
-  if (!items.length) { showError("\u26A0\uFE0F Please enter a quantity for at least one dish."); return; }
+  if (!items.length) { showError("\u26A0\uFE0F " + t("errOneDish")); return; }
 
   const roles = getSelectedRoles();
-  if (!roles.length) { showError("\u26A0\uFE0F Please select at least one role."); return; }
+  if (!roles.length) { showError("\u26A0\uFE0F " + t("errRole")); return; }
   const rolesStr = roles.join(", ");
 
   const btn = document.getElementById("submitBtn");
-  btn.disabled = true; btn.textContent = "Saving\u2026";
+  btn.disabled = true; btn.textContent = t("saving");
 
   // One id per attempt, reused across retries of THAT attempt, so a double tap or
   // a retry after an ambiguous failure cannot append the same shift twice. Held on
@@ -1000,7 +1062,7 @@ function submitForm() {
     // double-record, and the id only protects us once the sheet has seen it.
     const reason = (err && err.message) ? err.message : "no connection";
     showError("\u274C NOT saved \u2014 " + reason + ". Your numbers are still on screen: check the connection and tap Submit Entry again. If it keeps failing, report it before closing this page.");
-    btn.disabled = false; btn.textContent = "Submit Entry";
+    btn.disabled = false; btn.textContent = t("submit");
   });
 }
 
@@ -1026,7 +1088,7 @@ function armUndo(payload) {
     if (!undoState) return;
     const left = Math.ceil((undoState.expires - Date.now()) / 1000);
     if (left <= 0) { disarmUndo(); return; }
-    btn.textContent = "Undo this entry (" + left + "s)";
+    btn.textContent = t("undo") + " (" + left + "s)";
   };
   tick();
   undoTimer = setInterval(tick, 1000);
@@ -1036,7 +1098,7 @@ function disarmUndo() {
   undoState = null;
   if (undoTimer) { clearInterval(undoTimer); undoTimer = null; }
   const btn = document.getElementById("undoBtn");
-  if (btn) { btn.hidden = true; btn.textContent = "Undo this entry"; }
+  if (btn) { btn.hidden = true; btn.textContent = t("undo"); }
 }
 
 function undoLast() {
@@ -1044,7 +1106,7 @@ function undoLast() {
   const btn = document.getElementById("undoBtn");
   const p = undoState.payload;
   btn.disabled = true;
-  btn.textContent = "Undoing…";
+  btn.textContent = t("undoing");
   fetch(SCRIPT_URL, {
     method: "POST", redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
@@ -1066,7 +1128,7 @@ function undoLast() {
     const title = document.querySelector(".success-title");
     const ring = document.querySelector(".success-ring");
     if (ring) ring.textContent = "↩";
-    if (title) title.textContent = "Entry undone";
+    if (title) title.textContent = t("undone");
     document.getElementById("successDetail").innerHTML =
       "That entry has been marked void in the sheet.<br>Tap <strong>+ New Entry</strong> to record it again.";
   })
@@ -1086,7 +1148,7 @@ function showQueued(date, employees, items, rolesStr) {
   const ring = document.querySelector(".success-ring");
   const title = document.querySelector(".success-title");
   if (ring) { ring.textContent = "⏳"; ring.classList.add("queued"); }
-  if (title) { title.textContent = "Saved on this phone"; title.classList.add("queued"); }
+  if (title) { title.textContent = t("queuedTitle"); title.classList.add("queued"); }
   document.getElementById("successDetail").innerHTML =
     "<strong>No connection — not in the sheet yet.</strong><br>"
     + "It sends automatically when you are back online. Keep this page open.<br><br>"
@@ -1113,7 +1175,7 @@ function resetForm() {
   document.querySelectorAll(".role-tab").forEach(t => t.classList.remove("active"));
   setRolesEnabled(false);
   const btn = document.getElementById("submitBtn");
-  btn.disabled = false; btn.textContent = "Submit Entry";
+  btn.disabled = false; btn.textContent = t("submit");
   delete btn.dataset.entryId;   // a fresh entry must never reuse a submitted id
   document.getElementById("successScreen").classList.remove("visible");
   // The queued screen reuses these nodes, so put them back or the next genuine
@@ -1121,7 +1183,7 @@ function resetForm() {
   const ring = document.querySelector(".success-ring");
   const title = document.querySelector(".success-title");
   if (ring) { ring.textContent = "✓"; ring.classList.remove("queued"); }
-  if (title) { title.textContent = "Saved!"; title.classList.remove("queued"); }
+  if (title) { title.textContent = t("saved"); title.classList.remove("queued"); }
   document.getElementById("formSection").style.display = "";
   document.getElementById("submitBar").style.display = "";
   clearError();
@@ -1160,8 +1222,8 @@ function updateTotal() {
   // Waste is appended only when non-zero, so the normal case stays a single
   // uncluttered number that a mistyped digit still stands out against.
   document.getElementById("totalLine").textContent =
-    "Total: "+total+(total === 1 ? " dish" : " dishes")
-    + (waste > 0 ? "  ·  " + waste + " waste" : "");
+    t("total") + ": " + total + " " + (total === 1 ? t("dish") : t("dishesWord"))
+    + (waste > 0 ? "  ·  " + waste + " " + t("waste") : "");
 }
 
 // --- Draft persistence ------------------------------------------------------
@@ -1308,13 +1370,13 @@ function updateRate() {
   // A 16h+ span almost always means one of the two fields is wrong, and a bad
   // duration silently poisons every throughput number built on it later.
   if (hrs > 16) {
-    el.textContent = "Shift looks like " + hrs.toFixed(1) + "h — please check the times.";
+    el.textContent = t("checkTimes") + " " + hrs.toFixed(1) + "h " + t("checkTimesEnd");
     el.classList.add("warn");
     return;
   }
   const label = Math.floor(mins / 60) + "h " + String(mins % 60).padStart(2, "0") + "m";
   el.textContent = total > 0
-    ? label + "  ·  " + (total / hrs).toFixed(1) + " dishes/hour"
+    ? label + "  ·  " + (total / hrs).toFixed(1) + " " + t("perHour")
     : label;
 }
 
@@ -1353,6 +1415,57 @@ function updateDupeBanner() {
     + ". If this is a second shift, carry on — otherwise you may be double-counting.";
   el.classList.add("visible");
 }
+
+// --- Applying the language ---------------------------------------------------
+// Re-labels in place rather than reloading, so a mid-entry switch never costs
+// someone their counts.
+function applyLang(lang) {
+  LANG = STRINGS[lang] ? lang : "en";
+  document.documentElement.lang = LANG;
+  try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* ignore */ }
+
+  const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+  set(".header-title", t("title"));
+  set("#linkSummary", t("summary") + " ›");
+  set("#linkTasks", t("tasks") + " ›");
+  set("#gloveToggle", t("glove"));
+  set("#labDate", t("date"));
+  set("#labTeam", t("team"));
+  set("#labDishes", t("dishes"));
+  set("#labRole", t("role"));
+  set("#labFrom", t("from"));
+  set("#labTo", t("to"));
+
+  const lh = document.getElementById("labHours");
+  if (lh) lh.innerHTML = escapeHtml(t("hours"))
+    + ' <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">'
+    + escapeHtml(t("hoursHint")) + '</span>';
+  const lc = document.getElementById("labComment");
+  if (lc) lc.innerHTML = escapeHtml(t("comment"))
+    + ' <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">'
+    + escapeHtml(t("optional")) + '</span>';
+
+  const ta = document.getElementById("comment");
+  if (ta) ta.placeholder = t("commentPlaceholder");
+
+  document.querySelectorAll(".waste-lab").forEach(el => { el.textContent = t("waste"); });
+
+  const btn = document.getElementById("submitBtn");
+  if (btn && !btn.disabled) btn.textContent = t("submit");
+  const again = document.querySelector(".btn-again");
+  if (again) again.textContent = t("newEntry");
+  const undoBtn = document.getElementById("undoBtn");
+  if (undoBtn && undoBtn.hidden) undoBtn.textContent = t("undo");
+
+  document.querySelectorAll(".lang-btn").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.lang === LANG ? "true" : "false");
+  });
+
+  updateTotal();
+  updateRate();
+}
+
+function setLang(lang) { applyLang(lang); }
 
 // --- Glove mode --------------------------------------------------------------
 // Remembered per device rather than per session: whoever assembles in gloves does
@@ -1470,6 +1583,16 @@ document.getElementById("comment").addEventListener("input", saveDraft);
   document.getElementById(id).addEventListener("change", () => { updateRate(); saveDraft(); });
   document.getElementById(id).addEventListener("input", updateRate);
 });
+// Stored choice wins; the browser's language is only an initial guess on a device
+// that has never chosen. Runs before restoreDraft so nothing renders in one
+// language and then flips.
+(function () {
+  let stored = null;
+  try { stored = localStorage.getItem(LANG_KEY); } catch (e) { /* ignore */ }
+  const guess = /^de\b/i.test(navigator.language || "") ? "de" : "en";
+  applyLang(stored || guess);
+})();
+
 restoreDraft();
 updateTotal();
 updateRate();
