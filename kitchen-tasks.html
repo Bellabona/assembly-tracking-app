@@ -595,9 +595,47 @@ function updatePendingBadge() {
   const el = document.getElementById('pendingBadge');
   if (!el) return;
   const n = readOutbox().length;
-  el.textContent = n ? (n + ' check' + (n === 1 ? '' : 's') + ' not yet saved — keep this page open')
-                     : '';
-  el.className = n ? 'pending visible' : 'pending';
+  if (!n) { el.textContent = ''; el.className = 'pending'; return; }
+  el.textContent = BACKEND_READY === false
+    // Being specific matters: staff can see their ticks are held, and a shift
+    // leader reading over their shoulder gets told what actually has to happen.
+    ? n + ' check' + (n === 1 ? '' : 's') + ' held on this phone — recording is not switched on yet '
+        + '(the Apps Script patch has not been applied). Your ticks are saved here and will '
+        + 'upload once it is.'
+    : n + ' check' + (n === 1 ? '' : 's') + ' not yet saved — keep this page open';
+  el.className = 'pending visible';
+}
+
+// --- Does the backend understand a haccp_check yet? --------------------------
+// It only does once tools/apps-script-doPost.gs has been applied. An UNPATCHED
+// doPost does not look at `type`: it reads date/employees/dishes, finds them all
+// undefined, and appends a blank row with nothing but a timestamp. That happened
+// -- 32 junk rows in the entries sheet before this guard existed.
+//
+// So we probe first and hold the checks in the outbox until the backend can
+// actually store them. Nothing is lost: the outbox is already durable and
+// retries, it just will not write garbage in the meantime.
+let BACKEND_READY = null;          // null = unknown, true/false once probed
+
+async function probeBackend() {
+  if (BACKEND_READY !== null) return BACKEND_READY;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(SCRIPT_URL + '?view=roster', { redirect: 'follow', signal: ctrl.signal });
+    clearTimeout(t);
+    if (res.ok) {
+      const j = JSON.parse(await res.text());
+      // ?view=roster only exists in the patched script. An unpatched one answers
+      // with its health check, which has no `employees` key at all.
+      BACKEND_READY = !!(j && Object.prototype.hasOwnProperty.call(j, 'employees'));
+    } else {
+      BACKEND_READY = null;        // transient: probe again next time
+    }
+  } catch (e) {
+    BACKEND_READY = null;          // offline: unknown, not "not ready"
+  }
+  return BACKEND_READY;
 }
 
 let flushing = false;
@@ -605,6 +643,11 @@ async function flushOutbox() {
   if (flushing) return;
   const queue = readOutbox();
   if (!queue.length) return;
+
+  // Never post a check the backend would turn into a blank row.
+  const ready = await probeBackend();
+  if (ready !== true) { updatePendingBadge(); return; }
+
   flushing = true;
   try {
     // Oldest first, and stop at the first failure so ordering is preserved and we

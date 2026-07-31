@@ -230,13 +230,27 @@ async function load(date) {
       throw new Error("the backend did not return summary data");
     }
     if (data && data.ok === false) throw new Error(data.error || "the backend reported an error");
+    // An UNPATCHED script returns valid JSON that simply is not a summary -- its
+    // health check. Without this, `hasData` reads as undefined and the page would
+    // say "nothing recorded today", which looks like a quiet shift rather than a
+    // backend that cannot answer the question at all.
+    if (!data || !Object.prototype.hasOwnProperty.call(data, "hasData")) {
+      throw new Error("__NOT_PATCHED__");
+    }
   } catch (err) {
     document.getElementById("sub").textContent = date;
-    showMessage("people",
-      '<strong>Could not load</strong>'+esc((err && err.message) || "no connection")
-      + '<br><br>If this is the first time: the Apps Script patch in '
-      + '<code>tools/apps-script-doPost.gs</code> has to be applied before this page '
-      + 'has anything to read.', true);
+    const notPatched = err && err.message === "__NOT_PATCHED__";
+    showMessage("people", notPatched
+      ? '<strong>Recording is not switched on yet</strong>'
+        + 'The backend answered, but it does not have the summary endpoint, so there is '
+        + 'nothing for this page to read yet.<br><br>'
+        + 'Apply <code>tools/apps-script-doPost.gs</code> to the Apps Script project and '
+        + 'redeploy the existing deployment. Entries staff submit are still being saved to '
+        + 'the main sheet in the meantime — only this view is waiting.'
+      : '<strong>Could not load</strong>'+esc((err && err.message) || "no connection")
+        + '<br><br>If this is the first time: the Apps Script patch in '
+        + '<code>tools/apps-script-doPost.gs</code> has to be applied before this page '
+        + 'has anything to read.', true);
     showMessage("dishes", "—");
     return;
   }

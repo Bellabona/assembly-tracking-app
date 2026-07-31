@@ -7,7 +7,14 @@ function boot({fetchImpl=null,storage={}}={}) {
   const inj = html.replace('<script>', `<script>try{${Object.entries(storage).map(([k,v])=>`localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`).join('')}}catch(e){}\n`);
   const impl = fetchImpl || (()=>Promise.resolve({ok:true,status:200,text:()=>Promise.resolve('{"ok":true}')}));
   return new JSDOM(inj,{runScripts:'dangerously',url:'http://localhost:8765/',pretendToBeVisual:true,
-    beforeParse(win){ win.fetch=impl; }}).window;
+    beforeParse(win){
+      // The roster probe doubles as the "is the backend patched" check, and undo
+      // stays hidden unless it is. Answer with an `employees` key so these tests
+      // exercise undo rather than the guard (tguard.mjs covers the guard).
+      win.fetch=(u,o)=>String(u).includes('view=roster')
+        ? Promise.resolve({ok:true,status:200,text:()=>Promise.resolve('{"ok":true,"employees":["Joel","Anny"]}')})
+        : impl(u,o);
+    }}).window;
 }
 function fill(w,{emp='Joel',role='Main',counts={},from='',to=''}={}){
   const l=w.eval('DISH_LETTERS[0]');

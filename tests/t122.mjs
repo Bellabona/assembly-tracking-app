@@ -94,7 +94,7 @@ const SUM={ok:true,date:'2026-07-31',hasData:true,totalDishes:312,totalWaste:14,
   const w=mk(sumh,(u)=>{ ok("requests the summary endpoint", String(u).includes('view=today')); return jsonRes(SUM); },
     'http://localhost:8765/summary.html');
   await sleep(150);
-  const t=w.document.body.textContent;
+  const t=w.document.querySelector('main').textContent;
   ok("shows total dishes", /312/.test(t));
   ok("shows waste with a share of total", /14/.test(t) && /%/.test(t), (t.match(/[\d.]+%/)||[''])[0]);
   ok("lists both people", /Joel/.test(t) && /Anny/.test(t));
@@ -108,26 +108,26 @@ const SUM={ok:true,date:'2026-07-31',hasData:true,totalDishes:312,totalWaste:14,
   const w=mk(sumh,()=>jsonRes({ok:true,date:'2026-07-30',hasData:false,totalDishes:0,totalWaste:0,entries:0,byPerson:[],byDish:[]}),
     'http://localhost:8765/summary.html');
   await sleep(150);
-  ok("empty day says so plainly", /Nothing recorded/i.test(w.document.body.textContent));
-  ok("mentions entries may have been undone", /undone/i.test(w.document.body.textContent));
+  ok("empty day says so plainly", /Nothing recorded/i.test(w.document.querySelector('main').textContent));
+  ok("mentions entries may have been undone", /undone/i.test(w.document.querySelector('main').textContent));
 }
 { // backend not patched -> health check JSON, no summary fields
   const w=mk(sumh,()=>jsonRes({status:'ok',message:'Assembly Tracking API is running'}),
     'http://localhost:8765/summary.html');
   await sleep(150);
-  const t=w.document.body.textContent;
+  const t=w.document.querySelector('main').textContent;
   ok("un-patched backend explains what to do", /apps-script-doPost/.test(t), t.slice(0,120));
 }
 { // HTML error page
   const w=mk(sumh,()=>Promise.resolve({ok:true,status:200,text:()=>Promise.resolve('<html>Exception</html>')}),
     'http://localhost:8765/summary.html');
   await sleep(150);
-  ok("HTML error page reported, not rendered", /Could not load/i.test(w.document.body.textContent));
+  ok("HTML error page reported, not rendered", /Could not load/i.test(w.document.querySelector('main').textContent));
 }
 { // offline
   const w=mk(sumh,()=>Promise.reject(new TypeError('offline')),'http://localhost:8765/summary.html');
   await sleep(150);
-  ok("offline reported", /Could not load/i.test(w.document.body.textContent));
+  ok("offline reported", /Could not load/i.test(w.document.querySelector('main').textContent));
 }
 { // XSS via a dish name coming from the sheet
   const w=mk(sumh,()=>jsonRes({...SUM,byDish:[{dish:'<img src=x onerror=alert(1)>',letter:'C',qty:5,waste:0}]}),

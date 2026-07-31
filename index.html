@@ -685,6 +685,12 @@ document.getElementById("date").value = getTodayLocal();
 // baseline. If the sheet has a Roster tab it wins, so a new hire can work their
 // first shift without waiting for a deploy. An EMPTY response never wins: that
 // would leave nobody able to submit.
+// Whether the Apps Script patch is live. An UNPATCHED doPost ignores `type` and
+// blindly appends date/employees/dishes, so a void_entry would land as a blank
+// row with nothing but a timestamp -- it did, 32 times, before this existed.
+// Undo therefore stays hidden until the backend can actually process it.
+let BACKEND_READY = null;
+
 async function refreshRosterFromSheet() {
   let names = null;
   try {
@@ -694,6 +700,9 @@ async function refreshRosterFromSheet() {
     clearTimeout(t);
     if (res.ok) {
       const j = JSON.parse(await res.text());
+      // ?view=roster exists only in the patched script; an unpatched one answers
+      // with a health check that has no `employees` key.
+      BACKEND_READY = !!(j && Object.prototype.hasOwnProperty.call(j, "employees"));
       if (j && Array.isArray(j.employees) && j.employees.length) names = j.employees;
     }
   } catch (e) { return; }              // not deployed, offline, or slow: keep the baseline
@@ -1078,6 +1087,11 @@ let undoTimer = null;
 const UNDO_SECONDS = 60;
 
 function armUndo(payload) {
+  // Arm unless we KNOW the backend cannot process it. BACKEND_READY is still null
+  // for the first moment after load, and refusing then would silently drop the
+  // affordance for anyone quick. undoLast() re-checks before it posts, so an
+  // unpatched backend is still never sent a void_entry.
+  if (BACKEND_READY === false) { disarmUndo(); return; }
   undoState = { payload: payload, expires: Date.now() + UNDO_SECONDS * 1000 };
   const btn = document.getElementById("undoBtn");
   if (!btn) return;
@@ -1101,13 +1115,41 @@ function disarmUndo() {
   if (btn) { btn.hidden = true; btn.textContent = t("undo"); }
 }
 
-function undoLast() {
+// Probe once, on demand, for callers that must not act on an unknown backend.
+async function ensureBackendProbed() {
+  if (BACKEND_READY !== null) return BACKEND_READY;
+  try {
+    const ctrl = new AbortController();
+    const t2 = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(SCRIPT_URL + "?view=roster", { redirect: "follow", signal: ctrl.signal });
+    clearTimeout(t2);
+    if (res.ok) {
+      const j = JSON.parse(await res.text());
+      BACKEND_READY = !!(j && Object.prototype.hasOwnProperty.call(j, "employees"));
+    }
+  } catch (e) { /* leave null: unknown, try again next time */ }
+  return BACKEND_READY;
+}
+
+async function undoLast() {
   if (!undoState) return;
   const btn = document.getElementById("undoBtn");
   const p = undoState.payload;
   btn.disabled = true;
   btn.textContent = t("undoing");
-  fetch(SCRIPT_URL, {
+
+  // Last line of defence: an unpatched doPost would turn this into a blank row
+  // AND leave the entry standing, so staff would believe it had been retracted.
+  const ready = await ensureBackendProbed();
+  if (ready === false) {
+    btn.disabled = true;
+    btn.hidden = true;
+    showError("⚠️ Undo is not available yet — the sheet cannot process it. "
+      + "The entry is saved. Ask your shift leader to correct it.");
+    return;
+  }
+
+  return fetch(SCRIPT_URL, {
     method: "POST", redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
     body: JSON.stringify({ type: "void_entry", entryId: p.entryId, date: p.date,

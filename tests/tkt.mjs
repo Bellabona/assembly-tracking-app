@@ -15,6 +15,13 @@ function boot({op='Salman', fetchImpl=null, storage={}}={}) {
     // flush fires against an undefined fetch -- which a real browser never does.
     beforeParse(win){
       win.fetch = (u, o) => {
+        // Must look PATCHED (an `employees` key) or the junk-row guard correctly
+        // refuses to post -- see tguard.mjs for the unpatched behaviour.
+        if (String(u).includes('view=roster')) {
+          // Real roster, so operators the tests use are present.
+          const j = JSON.stringify({ok:true, employees: JSON.parse(readFileSync('/Users/abbassalloum/assembly-tracking-app/roster.json','utf8')).employees});
+          return Promise.resolve({ok:true,status:200,text:()=>Promise.resolve(j),json:()=>Promise.resolve(JSON.parse(j))});
+        }
         if (String(u).includes('roster.json')) {
           const j = readFileSync('/Users/abbassalloum/assembly-tracking-app/roster.json','utf8');
           return Promise.resolve({ok:true,status:200,json:()=>Promise.resolve(JSON.parse(j)),text:()=>Promise.resolve(j)});
@@ -40,7 +47,8 @@ async function bootReady(opts){
 // ---- mojibake gone ----
 {
   const w=await bootReady();
-  const txt=w.document.body.textContent;
+  // #app only: the <script> is inside <body>, so its source would match too.
+  const txt=w.document.getElementById('app').textContent;
   ok("temperature text renders correctly (≥75°C)", txt.includes('≥75°C'), txt.match(/Core[^·]{0,24}/)?.[0]);
   ok("no mojibake in rendered page", !/Â|â/.test(txt));
 }
@@ -151,14 +159,17 @@ async function bootReady(opts){
   const checks=[...w.document.querySelectorAll('.check')];
   ok("HACCP checklist available to someone absent from the stale plan", checks.length>0, "checks="+checks.length);
   ok("all of them are haccp kind (no invented stations)", checks.every(c=>c.dataset.kind==='haccp'));
-  ok("explains why there are no stations", /No stations for you in this plan/.test(w.document.body.textContent));
-  ok("does not claim a role or shift it cannot know", !/undefined/.test(w.document.body.textContent));
+  ok("explains why there are no stations", /No stations for you in this plan/.test(w.document.getElementById('app').textContent));
+  // Scope to the rendered app, not body.textContent: the <script> lives inside
+  // <body>, so its source (comments included) would match too.
+  ok("does not claim a role or shift it cannot know",
+     !/undefined/.test(w.document.getElementById('app').textContent));
 }
 // ---- someone genuinely off the roster is a dead end ----
 {
   const w=await bootReady({op:'Manisha Patil'});
   ok("departed person cannot record checks", w.document.querySelectorAll('.check').length===0);
-  ok("told they are not on the roster", /not on the current Berlin roster/.test(w.document.body.textContent));
+  ok("told they are not on the roster", /not on the current Berlin roster/.test(w.document.getElementById('app').textContent));
 }
 // ---- roster fetch failure falls back rather than locking everyone out ----
 {
