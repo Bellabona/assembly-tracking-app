@@ -1,0 +1,31 @@
+{
+  "_comment": [
+    "Single source of truth for who works the Berlin kitchen.",
+    "",
+    "This file is GENERATED. Do not hand-edit it.",
+    "",
+    "The weekly scheduled task maintains the EMPLOYEES array inside index.html, as",
+    "it always has. CI (.github/workflows/thumbnails.yml) copies that array here on",
+    "every push, so this file follows index.html automatically and cannot drift.",
+    "",
+    "Why it exists: kitchen-tasks.html used to carry its own roster, which froze in",
+    "April 2026 and went on offering shifts to people who had left while omitting",
+    "eight people who had joined. Both pages now read this one file."
+  ],
+  "kitchen": "Berlin",
+  "generatedFrom": "index.html EMPLOYEES",
+  "employees": [
+    "Joel",
+    "Jash",
+    "Varush",
+    "Hamid",
+    "Salman",
+    "Ranjith",
+    "Anny",
+    "Alfiya",
+    "Rochelle",
+    "Nisha",
+    "Ritu",
+    "Aishwarya"
+  ]
+}

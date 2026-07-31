@@ -156,6 +156,11 @@
 
   .check:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
+  /* On the roster, but absent from this (stale) plan. Still tappable -- the HACCP
+     checklist applies to everyone -- just visibly distinct so nobody expects
+     stations behind it. */
+  .op-grid a.no-plan { opacity: 0.62; border-style: dashed; }
+
   @media (min-width: 700px) {
     main { padding: 20px; }
   }
@@ -337,15 +342,64 @@ function checkboxKey(opName, taskIdx, dishIdx) {
   return `kt_${TASKS_DATA.date}_${opName}_${taskIdx}_${dishIdx}`;
 }
 
+// ---------------------------------------------------------------------------
+// Roster
+//
+// The name list used to come from TASKS_DATA.operators, which froze on
+// 2026-04-22. It offered shifts to three people who had left (Ankit Gaharwar,
+// Manisha Patil, Sreekant Goud) and omitted eight who had joined.
+//
+// The roster now comes from roster.json, which CI keeps in step with the
+// EMPLOYEES array in index.html -- the list the weekly task already maintains.
+// ROSTER_FALLBACK is only used if that fetch fails (offline, first load before
+// the service worker has cached it). It is a fallback, never the source.
+// ---------------------------------------------------------------------------
+let ROSTER = null;
+const ROSTER_FALLBACK = ["Joel","Jash","Varush","Hamid","Salman","Ranjith",
+                         "Anny","Alfiya","Rochelle","Nisha","Ritu","Aishwarya"];
+
+async function loadRoster() {
+  try {
+    const res = await fetch('roster.json', { cache: 'no-cache' });
+    if (res.ok) {
+      const j = await res.json();
+      if (j && Array.isArray(j.employees) && j.employees.length) {
+        ROSTER = j.employees.slice();
+        return;
+      }
+    }
+  } catch (e) { /* offline or blocked: fall through */ }
+  ROSTER = ROSTER_FALLBACK.slice();
+}
+
+// The stale plan keys operators by full name ("Salman Iqbal") while the roster
+// uses first names ("Salman"). Match on the first token so a current employee is
+// still linked to whatever plan data exists for them.
+function planKeyFor(rosterName) {
+  const want = String(rosterName).trim().toLowerCase();
+  const keys = Object.keys(TASKS_DATA.operators || {});
+  for (const k of keys) {
+    if (k.trim().toLowerCase() === want) return k;
+  }
+  for (const k of keys) {
+    if (k.trim().split(/\s+/)[0].toLowerCase() === want) return k;
+  }
+  return null;
+}
+
 function renderPicker() {
-  const ops = Object.keys(TASKS_DATA.operators).sort();
-  const links = ops.map(name =>
-    `<a href="?op=${encodeURIComponent(name)}">${escHtml(name)}</a>`
-  ).join('');
+  const names = (ROSTER || ROSTER_FALLBACK).slice().sort((a, b) => a.localeCompare(b));
+  const links = names.map(name => {
+    // Flag who has no station data in this plan, so nobody taps their name and
+    // wonders why it is empty. The HACCP checklist works for everyone regardless.
+    const hasPlan = !!planKeyFor(name);
+    return `<a href="?op=${encodeURIComponent(name)}"${hasPlan ? '' : ' class="no-plan"'}>${escHtml(name)}</a>`;
+  }).join('');
   return `
     <div class="picker">
       <h2>Pick your name</h2>
-      <div class="hint">Tap your name to see your tasks for ${escHtml(TASKS_DATA.date)}.</div>
+      <div class="hint">Tap your name for the HACCP checklist. Names in grey have no
+        stations in this old plan &mdash; the checklist still works.</div>
       <div class="op-grid">${links}</div>
     </div>
     <div class="haccp-banner">
@@ -356,14 +410,33 @@ function renderPicker() {
 }
 
 function renderOperator(name) {
-  const data = TASKS_DATA.operators[name];
-  if (!data) {
+  const roster = ROSTER || ROSTER_FALLBACK;
+  // Someone genuinely not on the roster (an old bookmark, a departed colleague's
+  // link) is a real dead end -- say so rather than silently showing a checklist
+  // that would be recorded against a name that no longer works here.
+  if (!roster.some(r => r.toLowerCase() === String(name).trim().toLowerCase())) {
     return `<div class="empty">
-      <p><strong>${escHtml(name)}</strong> not found in today's roster.</p>
+      <p><strong>${escHtml(name)}</strong> is not on the current Berlin roster.</p>
+      <p>If you have just joined, ask your shift leader to add you.</p>
       <p><a href="?">← Back to name list</a></p>
     </div>`;
   }
-  const tasksHtml = data.tasks.map((task, ti) => {
+
+  const planKey = planKeyFor(name);
+  const data = planKey ? TASKS_DATA.operators[planKey] : null;
+
+  // No station data for this person in the stale plan. The HACCP checklist is the
+  // part that must not be blocked on that, so render it anyway.
+  const tasksHtml = !data ? `
+      <div class="station">
+        <div class="station-head"><h3>No stations for you in this plan</h3></div>
+        <div style="font-size:12px; color:var(--mut); padding:8px 0; line-height:1.5;">
+          This plan is from ${escHtml(TASKS_DATA.date)} and does not list you. Get your
+          stations from your shift leader. The HACCP checklist below still applies
+          and is still recorded.
+        </div>
+      </div>
+  ` : data.tasks.map((task, ti) => {
     const dishes = task.dishes || [];
     const dishRows = dishes.length === 0
       ? `<div style="font-size:12px; color:var(--mut); padding:8px 0;">Team-wide station — no specific dishes assigned</div>`
@@ -412,10 +485,16 @@ function renderOperator(name) {
     `;
   }).join('');
 
+  // `data` is null for anyone the stale plan does not mention, so neither role
+  // nor shift can be assumed here.
+  const meta = data
+    ? `${escHtml(data.role)} · Shift ${escHtml(data.shift)}`
+    : `On the Berlin roster · no shift listed in this plan`;
+
   return `
     <div class="op-header">
       <h2>👤 ${escHtml(name)}</h2>
-      <div class="meta">${escHtml(data.role)} · Shift ${escHtml(data.shift)}</div>
+      <div class="meta">${meta}</div>
     </div>
     ${tasksHtml}
     <div class="haccp-card">
@@ -603,7 +682,7 @@ function renderStaleWarning() {
 }
 
 // Boot
-(function () {
+(async function () {
   const params = new URLSearchParams(location.search);
   const op = params.get('op');
   const app = document.getElementById('app');
@@ -611,6 +690,11 @@ function renderStaleWarning() {
   const dateSpan = document.getElementById('dataDate');
   dateSpan.textContent = TASKS_DATA.date;
   sub.textContent = `Berlin · ${TASKS_DATA.date} · ${TASKS_DATA.week}`;
+
+  // Await the roster before rendering: the name list and the "is this person
+  // still here" check both depend on it, and rendering twice would make names
+  // jump under a thumb that is already moving toward one.
+  await loadRoster();
 
   const body = op ? renderOperator(op) : renderPicker();
   app.innerHTML = renderStaleWarning()

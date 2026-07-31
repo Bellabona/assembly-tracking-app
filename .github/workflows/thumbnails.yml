@@ -37,10 +37,17 @@ jobs:
       - name: Build any missing thumbnails
         run: ./tools/make-thumbs.sh
 
+      # The roster used to live in two files. kitchen-tasks.html carried its own
+      # copy, which froze in April 2026 and went on listing departed staff while
+      # omitting eight people who had joined. The weekly task maintains EMPLOYEES
+      # in index.html, so that stays the source and this copies it forward.
+      - name: Sync roster.json from index.html
+        run: ./tools/sync-roster.sh
+
       - name: Commit thumbs/ and the manifest together
         run: |
           set -euo pipefail
-          if [ -z "$(git status --porcelain thumbs/ index.html)" ]; then
+          if [ -z "$(git status --porcelain thumbs/ index.html roster.json)" ]; then
             echo "Thumbnails already match the current menu - nothing to commit."
             exit 0
           fi
@@ -48,7 +55,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # thumbs/ and index.html go in ONE commit: a deployed index.html must
           # never list a uuid whose thumb has not shipped yet.
-          git add thumbs/ index.html
+          git add thumbs/ index.html roster.json
           # [skip ci] is belt-and-braces. Pushes authenticated with GITHUB_TOKEN
           # do not retrigger workflows, so this cannot loop.
           git commit -m "Rebuild dish thumbnails for the current menu [skip ci]"
