@@ -497,6 +497,7 @@
     <div class="header-date" id="headerDate"></div>
     <!-- The kitchen-tasks page went 100 days without an update partly because
          nothing linked to it. Reachable now. -->
+    <a class="header-link" href="summary.html">Summary &rsaquo;</a>
     <a class="header-link" href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
     <button type="button" class="glove-toggle" id="gloveToggle"
             aria-pressed="false" onclick="toggleGlove()">&#129508; Glove mode</button>
@@ -665,12 +666,44 @@ function getTodayLocal() {
 }
 document.getElementById("date").value = getTodayLocal();
 
+// The EMPLOYEES array above is maintained by the weekly task and is the offline
+// baseline. If the sheet has a Roster tab it wins, so a new hire can work their
+// first shift without waiting for a deploy. An EMPTY response never wins: that
+// would leave nobody able to submit.
+async function refreshRosterFromSheet() {
+  let names = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(SCRIPT_URL + "?view=roster", { redirect: "follow", signal: ctrl.signal });
+    clearTimeout(t);
+    if (res.ok) {
+      const j = JSON.parse(await res.text());
+      if (j && Array.isArray(j.employees) && j.employees.length) names = j.employees;
+    }
+  } catch (e) { return; }              // not deployed, offline, or slow: keep the baseline
+  if (!names) return;
+
+  const current = [...empBox.querySelectorAll(".emp-chip")].map(c => c.dataset.name);
+  if (names.length === current.length && names.every((n, i) => n === current[i])) return;
+
+  // Never rebuild under someone mid-entry: they would lose their selection, and
+  // on a phone the chips would move under a thumb already on the way down.
+  if (empBox.querySelector(".emp-chip.checked")) return;
+
+  empBox.innerHTML = "";
+  names.forEach(addEmployeeChip);
+}
+
 const empBox = document.getElementById("employees");
-EMPLOYEES.forEach(name => {
+function addEmployeeChip(name) {
   const chip = document.createElement("div");
   chip.className = "emp-chip";
   chip.dataset.name = name;
-  chip.innerHTML = '<div class="check-badge">&#10003;</div><div class="avatar">'+name.slice(0,2).toUpperCase()+'</div><div class="emp-name">'+name+'</div>';
+  // Names now arrive from the sheet as well as this file, so they are escaped.
+  chip.innerHTML = '<div class="check-badge">&#10003;</div><div class="avatar">'
+    + escapeHtml(name.slice(0,2).toUpperCase()) + '</div><div class="emp-name">'
+    + escapeHtml(name) + '</div>';
   chip.addEventListener("click", () => {
     if (chip.classList.contains("disabled")) return;
     if (chip.classList.contains("checked")) {
@@ -686,7 +719,9 @@ EMPLOYEES.forEach(name => {
     updateDupeBanner();   // the warning is per person, so it moves with the chip
   });
   empBox.appendChild(chip);
-});
+}
+
+EMPLOYEES.forEach(addEmployeeChip);
 
 // Tiles follow DISH_NAMES, so the weekly auto-update decides which ones exist.
 const DISH_LETTERS = Object.keys(DISH_NAMES);
@@ -1441,6 +1476,8 @@ updateRate();
 updateDupeBanner();
 updateQueueBanner();
 flushQueue();
+// After restoreDraft, so a restored selection is never blown away by a refresh.
+refreshRosterFromSheet();
 </script>
 </body>
 </html>

@@ -176,7 +176,9 @@
 <main id="app"></main>
 
 <footer>
-  Updated automatically each evening. Data: <span id="dataDate">—</span><br/>
+  <a href="index.html">&lsaquo; Assembly entry</a> &nbsp;·&nbsp;
+  <a href="summary.html">Summary &rsaquo;</a><br/>
+  Data: <span id="dataDate">—</span><br/>
   <a id="repoLink" href="https://github.com/Bellabona/assembly-tracking-app">github.com/Bellabona</a>
 </footer>
 
@@ -355,21 +357,51 @@ function checkboxKey(opName, taskIdx, dishIdx) {
 // the service worker has cached it). It is a fallback, never the source.
 // ---------------------------------------------------------------------------
 let ROSTER = null;
+let ROSTER_SOURCE = "";
 const ROSTER_FALLBACK = ["Joel","Jash","Varush","Hamid","Salman","Ranjith",
                          "Anny","Alfiya","Rochelle","Nisha","Ritu","Aishwarya"];
 
+// Three tiers, most authoritative first. Each falls through only on failure or an
+// EMPTY list -- an empty roster must never win, because it would lock the whole
+// kitchen out of the HACCP checklist.
+//
+//   1. the sheet, via ?view=roster   -- live, so a new hire works the same shift
+//   2. roster.json                   -- CI-synced from index.html, works offline
+//   3. ROSTER_FALLBACK               -- last resort, baked in
 async function loadRoster() {
+  // The sheet is authoritative but on the far side of the network, so it gets a
+  // short timeout: staff must not stare at a blank name list because Apps Script
+  // is slow to wake up.
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(SCRIPT_URL + '?view=roster', { redirect: 'follow', signal: ctrl.signal });
+    clearTimeout(t);
+    if (res.ok) {
+      const body = await res.text();
+      const j = JSON.parse(body);          // throws on an HTML error page: fine
+      if (j && Array.isArray(j.employees) && j.employees.length) {
+        ROSTER = j.employees.slice();
+        ROSTER_SOURCE = 'sheet';
+        return;
+      }
+    }
+  } catch (e) { /* not deployed yet, offline, or slow: fall through */ }
+
   try {
     const res = await fetch('roster.json', { cache: 'no-cache' });
     if (res.ok) {
       const j = await res.json();
       if (j && Array.isArray(j.employees) && j.employees.length) {
         ROSTER = j.employees.slice();
+        ROSTER_SOURCE = 'roster.json';
         return;
       }
     }
-  } catch (e) { /* offline or blocked: fall through */ }
+  } catch (e) { /* offline before the worker cached it: fall through */ }
+
   ROSTER = ROSTER_FALLBACK.slice();
+  ROSTER_SOURCE = 'built-in';
 }
 
 // The stale plan keys operators by full name ("Salman Iqbal") while the roster

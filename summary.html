@@ -1,0 +1,275 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#062018" />
+<title>BellaBona &#127837; Assembly Summary</title>
+<style>
+  :root {
+    --bg:#062018; --surface:rgba(255,255,255,0.055); --surface2:rgba(255,255,255,0.09);
+    --border:rgba(142,219,90,0.18); --border2:rgba(255,255,255,0.10);
+    --accent:#8EDB5A; --accent2:#b7ec92; --text:#F3F7F0; --muted:#9fbaa6;
+    --danger:#ff6b6b; --warn:#F0A34A; --radius:18px;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
+    background:#062018; color:var(--text); margin:0; min-height:100dvh;
+    background-image:
+      radial-gradient(1200px 820px at 12% -12%, rgba(142,219,90,0.15), transparent 55%),
+      linear-gradient(162deg,#0a4a37 0%,#083B2D 42%,#062018 74%,#04140f 100%);
+    background-attachment:fixed;
+  }
+  header {
+    position:sticky; top:0; z-index:10;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
+    background:linear-gradient(180deg,rgba(8,59,45,0.94),rgba(6,32,24,0.80));
+    backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  h1 { font-size:16px; font-weight:800; margin:0; letter-spacing:0.2px; }
+  .sub { font-size:11px; color:var(--accent); font-weight:600; margin-top:2px; }
+  header a { color:var(--muted); font-size:11px; font-weight:700; text-decoration:none; }
+  header a:hover { color:var(--accent2); }
+  main { padding:16px 16px calc(28px + env(safe-area-inset-bottom)); max-width:860px; margin:auto; }
+
+  .datebar { display:flex; gap:9px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  .datebar input[type=date] {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    border-radius:12px; padding:11px 13px; font-size:15px; font-weight:700;
+    font-family:inherit; outline:none; color-scheme:dark; flex:1; min-width:150px;
+  }
+  .datebar button {
+    background:var(--surface2); border:1px solid var(--border2); color:var(--text);
+    border-radius:12px; padding:11px 15px; font-size:13px; font-weight:700;
+    font-family:inherit; cursor:pointer; min-height:44px;
+  }
+  .datebar button:hover { border-color:var(--accent); color:var(--accent2); }
+
+  /* Stat tiles. One row of the few numbers a shift leader actually acts on. */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+  @media (max-width:560px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stat {
+    background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius);
+    padding:14px 13px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  }
+  .stat .k {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+    color:var(--muted); margin-bottom:6px;
+  }
+  .stat .v { font-size:26px; font-weight:800; line-height:1; color:var(--accent2); }
+  .stat .v.small { font-size:19px; }
+  .stat.warn .v { color:var(--warn); }
+
+  h2 {
+    font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
+    color:var(--accent); margin:22px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  h2::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius);
+    overflow:hidden; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  }
+  .tablewrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; min-width:420px; }
+  th, td { padding:11px 13px; text-align:left; white-space:nowrap; }
+  th {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;
+    color:var(--muted); border-bottom:1px solid var(--border2);
+  }
+  td { border-bottom:1px solid rgba(255,255,255,0.05); }
+  tr:last-child td { border-bottom:none; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  td.name { font-weight:700; }
+  .waste { color:var(--danger); }
+  .zero { color:var(--muted); font-weight:400; }
+
+  /* Share-of-total bar behind the dish rows: the mix is easier to see than read. */
+  .barcell { position:relative; min-width:120px; }
+  .bar {
+    position:absolute; left:0; top:50%; transform:translateY(-50%);
+    height:20px; border-radius:5px;
+    background:linear-gradient(90deg,rgba(142,219,90,0.34),rgba(142,219,90,0.12));
+  }
+  .barlabel { position:relative; padding-left:8px; font-variant-numeric:tabular-nums; font-weight:700; }
+
+  .msg { padding:22px 18px; text-align:center; color:var(--muted); font-size:14px; line-height:1.6; }
+  .msg strong { color:var(--text); display:block; margin-bottom:6px; font-size:15px; }
+  .msg.err { color:#ff9b9b; }
+  .foot { margin-top:22px; text-align:center; font-size:11px; color:var(--muted); line-height:1.7; }
+</style>
+
+<header>
+  <div>
+    <h1>Assembly Summary</h1>
+    <div class="sub" id="sub">Loading…</div>
+  </div>
+  <div style="text-align:right">
+    <a href="index.html">&lsaquo; Entry form</a><br>
+    <a href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
+  </div>
+</header>
+
+<main>
+  <div class="datebar">
+    <input type="date" id="date">
+    <button type="button" id="prev">&lsaquo; Prev</button>
+    <button type="button" id="today">Today</button>
+    <button type="button" id="next">Next &rsaquo;</button>
+    <button type="button" id="reload">Refresh</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <h2>Per person</h2>
+  <div class="card"><div class="tablewrap"><div id="people"></div></div></div>
+
+  <h2>Dish mix</h2>
+  <div class="card"><div class="tablewrap"><div id="dishes"></div></div></div>
+
+  <div class="foot" id="foot"></div>
+</main>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function todayLocal() {
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function shiftDate(iso, days) {
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate()+days);
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function hhmm(mins) {
+  if (!mins) return "—";
+  return Math.floor(mins/60)+"h "+String(mins%60).padStart(2,"0")+"m";
+}
+
+function stat(k, v, opts) {
+  opts = opts || {};
+  return '<div class="stat'+(opts.warn?' warn':'')+'"><div class="k">'+esc(k)+'</div>'
+       + '<div class="v'+(opts.small?' small':'')+'">'+esc(v)+'</div></div>';
+}
+
+function renderStats(d) {
+  const rate = (d.totalMinutes && d.totalDishes)
+    ? (d.totalDishes/(d.totalMinutes/60)).toFixed(1) : null;
+  // Waste is shown as a share, because 12 waste means nothing without the volume
+  // it came from.
+  const pct = d.totalDishes > 0
+    ? ((d.totalWaste/(d.totalDishes+d.totalWaste))*100).toFixed(1)+"%" : "—";
+  document.getElementById("stats").innerHTML =
+      stat("Dishes", d.totalDishes)
+    + stat("Waste", d.totalWaste + (d.totalWaste ? "  ("+pct+")" : ""), {warn: d.totalWaste>0, small: d.totalWaste>0})
+    + stat("People", d.people || (d.byPerson||[]).length)
+    + stat("Entries", d.entries);
+}
+
+function renderPeople(rows) {
+  if (!rows.length) { document.getElementById("people").innerHTML = '<div class="msg">No entries.</div>'; return; }
+  const body = rows.map(p => {
+    const w = p.waste ? '<td class="num waste">'+p.waste+'</td>' : '<td class="num zero">0</td>';
+    return '<tr><td class="name">'+esc(p.employee)+'</td>'
+      + '<td>'+esc(p.role||"—")+'</td>'
+      + '<td class="num">'+p.dishes+'</td>'
+      + w
+      + '<td class="num">'+hhmm(p.minutes)+'</td>'
+      + '<td class="num">'+(p.perHour!=null?p.perHour:"—")+'</td></tr>';
+  }).join("");
+  document.getElementById("people").innerHTML =
+    '<table><thead><tr><th>Name</th><th>Role</th><th class="num">Dishes</th>'
+    + '<th class="num">Waste</th><th class="num">Shift</th><th class="num">Per hour</th>'
+    + '</tr></thead><tbody>'+body+'</tbody></table>';
+}
+
+function renderDishes(rows) {
+  if (!rows.length) { document.getElementById("dishes").innerHTML = '<div class="msg">No entries.</div>'; return; }
+  const max = Math.max.apply(null, rows.map(r => r.qty)) || 1;
+  const body = rows.map(r => {
+    const pct = Math.max(2, Math.round((r.qty/max)*100));
+    const w = r.waste ? '<td class="num waste">'+r.waste+'</td>' : '<td class="num zero">0</td>';
+    return '<tr><td class="name">'+esc(r.dish)+'</td>'
+      + '<td class="barcell"><div class="bar" style="width:'+pct+'%"></div>'
+      +   '<span class="barlabel">'+r.qty+'</span></td>'
+      + w + '</tr>';
+  }).join("");
+  document.getElementById("dishes").innerHTML =
+    '<table><thead><tr><th>Dish</th><th class="num">Assembled</th><th class="num">Waste</th>'
+    + '</tr></thead><tbody>'+body+'</tbody></table>';
+}
+
+function showMessage(where, html, isErr) {
+  document.getElementById(where).innerHTML =
+    '<div class="msg'+(isErr?' err':'')+'">'+html+'</div>';
+}
+
+async function load(date) {
+  document.getElementById("sub").textContent = "Loading "+date+"…";
+  document.getElementById("stats").innerHTML = "";
+  showMessage("people", "Loading…");
+  showMessage("dishes", "Loading…");
+  document.getElementById("foot").textContent = "";
+
+  let data = null;
+  try {
+    const res = await fetch(SCRIPT_URL+"?view=today&date="+encodeURIComponent(date), { redirect:"follow" });
+    if (!res.ok) throw new Error("HTTP "+res.status);
+    const body = await res.text();
+    try { data = JSON.parse(body); }
+    catch (e) {
+      // An Apps Script that has not had the patch applied answers a bare GET with
+      // its health-check JSON, and an erroring one answers with an HTML page.
+      throw new Error("the backend did not return summary data");
+    }
+    if (data && data.ok === false) throw new Error(data.error || "the backend reported an error");
+  } catch (err) {
+    document.getElementById("sub").textContent = date;
+    showMessage("people",
+      '<strong>Could not load</strong>'+esc((err && err.message) || "no connection")
+      + '<br><br>If this is the first time: the Apps Script patch in '
+      + '<code>tools/apps-script-doPost.gs</code> has to be applied before this page '
+      + 'has anything to read.', true);
+    showMessage("dishes", "—");
+    return;
+  }
+
+  if (!data.hasData) {
+    document.getElementById("sub").textContent = date;
+    document.getElementById("stats").innerHTML = "";
+    showMessage("people", '<strong>Nothing recorded for '+esc(date)+'</strong>'
+      + 'Either no one has submitted yet, or every entry for that date was undone.');
+    showMessage("dishes", "—");
+    return;
+  }
+
+  const byPerson = data.byPerson || [];
+  data.totalMinutes = byPerson.reduce((a,p) => a + (p.minutes||0), 0);
+  document.getElementById("sub").textContent = date;
+  renderStats(data);
+  renderPeople(byPerson);
+  renderDishes(data.byDish || []);
+  document.getElementById("foot").innerHTML =
+    "Voided entries are excluded. Generated "
+    + esc(new Date(data.generatedAt || Date.now()).toLocaleTimeString());
+}
+
+const dateEl = document.getElementById("date");
+const params = new URLSearchParams(location.search);
+dateEl.value = params.get("date") || todayLocal();
+
+dateEl.addEventListener("change", () => load(dateEl.value));
+document.getElementById("prev").onclick   = () => { dateEl.value = shiftDate(dateEl.value,-1); load(dateEl.value); };
+document.getElementById("next").onclick   = () => { dateEl.value = shiftDate(dateEl.value, 1); load(dateEl.value); };
+document.getElementById("today").onclick  = () => { dateEl.value = todayLocal(); load(dateEl.value); };
+document.getElementById("reload").onclick = () => load(dateEl.value);
+
+load(dateEl.value);
+</script>

@@ -301,12 +301,157 @@ function jsonOut(obj) {
 
 
 /**
- * OPTIONAL health check. Your deployment already answers GET with
+ * GET endpoints. Your deployment already answers a bare GET with
  *   {"status":"ok","message":"Assembly Tracking API is running"}
- * so only add this if you do not already have a doGet.
+ * and that behaviour is preserved, so replacing your existing doGet is safe.
+ *
+ *   ?view=roster   -> { ok, employees: [...] }        the current roster
+ *   ?view=today    -> { ok, date, totals, byPerson, byDish, ... }  supervisor view
+ *   ?date=YYYY-MM-DD with view=today for any other day.
+ *
+ * Read-only. Voided rows are excluded from every figure.
  */
-function doGet() {
-  return jsonOut({ status: 'ok', message: 'Assembly Tracking API is running' });
+function doGet(e) {
+  try {
+    var p = (e && e.parameter) || {};
+    var view = String(p.view || '').toLowerCase();
+
+    if (view === 'roster') {
+      return jsonOut({ ok: true, employees: rosterFromSheet_() });
+    }
+    if (view === 'today' || view === 'summary') {
+      return jsonOut(summaryFor_(p.date || todayIso_()));
+    }
+    return jsonOut({ status: 'ok', message: 'Assembly Tracking API is running' });
+
+  } catch (err) {
+    console.error('doGet failed: ' + (err && err.stack ? err.stack : err));
+    return jsonOut({ ok: false, status: 'error', error: String((err && err.message) || err) });
+  }
+}
+
+
+function todayIso_() {
+  return Utilities.formatDate(new Date(),
+    Session.getScriptTimeZone() || 'Europe/Berlin', 'yyyy-MM-dd');
+}
+
+
+/**
+ * The roster, from an optional 'Roster' tab with a header and one name per row in
+ * a column called `employee` (or the first column).
+ *
+ * Returns [] when that tab does not exist, which is the signal the client uses to
+ * keep its own list. That is deliberate: an empty roster must never be mistaken
+ * for "nobody works here", which would lock the kitchen out of the HACCP
+ * checklist.
+ */
+function rosterFromSheet_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Roster');
+  if (!sh || sh.getLastRow() < 2) return [];
+
+  var width = Math.max(1, sh.getLastColumn());
+  var header = sh.getRange(1, 1, 1, width).getValues()[0]
+                 .map(function (h) { return String(h).trim().toLowerCase(); });
+  var col = header.indexOf('employee') + 1;
+  if (col < 1) col = header.indexOf('name') + 1;
+  if (col < 1) col = 1;
+
+  var vals = sh.getRange(2, col, sh.getLastRow() - 1, 1).getValues();
+  var out = [], seen = {};
+  for (var i = 0; i < vals.length; i++) {
+    var n = String(vals[i][0]).trim();
+    if (!n || seen[n.toLowerCase()]) continue;
+    seen[n.toLowerCase()] = true;
+    out.push(n);
+  }
+  return out;
+}
+
+
+/**
+ * Everything the supervisor view needs for one date, in a single request.
+ *
+ * Aggregated here rather than in the browser so a phone is not pulling months of
+ * rows to add up one day. Reads AssemblyItems, which is the tab with dish names
+ * and per-dish rows -- the packed legacy string cannot be aggregated reliably.
+ */
+function summaryFor_(dateStr) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ITEMS_SHEET);
+  var empty = { ok: true, date: dateStr, hasData: false, totalDishes: 0, totalWaste: 0,
+                entries: 0, byPerson: [], byDish: [], generatedAt: new Date().toISOString() };
+  if (!sh || sh.getLastRow() < 2) return empty;
+
+  var header = itemsHeader_();
+  var width  = Math.max(header.length, sh.getLastColumn());
+  var rows   = sh.getRange(2, 1, sh.getLastRow() - 1, width).getValues();
+
+  var iDate = header.indexOf('entry_date'), iEmp = header.indexOf('employee'),
+      iRole = header.indexOf('role'), iName = header.indexOf('dish_name'),
+      iLet  = header.indexOf('dish_letter'), iQty = header.indexOf('qty'),
+      iWaste = header.indexOf('waste'), iMin = header.indexOf('shift_minutes'),
+      iVoid = header.indexOf('voided'), iId = header.indexOf('entry_id');
+
+  var people = {}, dishes = {}, entryIds = {}, totalQty = 0, totalWaste = 0, any = false;
+
+  for (var r = 0; r < rows.length; r++) {
+    var row = rows[r];
+    if (String(row[iDate]).indexOf(dateStr) !== 0 &&
+        formatCell_(row[iDate]) !== dateStr) continue;
+    if (iVoid >= 0 && String(row[iVoid] || '').length) continue;   // undone
+
+    any = true;
+    var emp   = String(row[iEmp] || '').trim() || '(unnamed)';
+    var qty   = Number(row[iQty]) || 0;
+    var waste = Number(row[iWaste]) || 0;
+    var dish  = String(row[iName] || '').trim() || ('Dish ' + String(row[iLet] || '?'));
+
+    totalQty += qty; totalWaste += waste;
+    if (iId >= 0) entryIds[String(row[iId])] = true;
+
+    if (!people[emp]) people[emp] = { employee: emp, dishes: 0, waste: 0, minutes: 0, role: '' };
+    people[emp].dishes += qty;
+    people[emp].waste  += waste;
+    if (iRole >= 0 && row[iRole]) people[emp].role = String(row[iRole]);
+    // shift_minutes repeats on every row of one entry, so take the max rather
+    // than summing, or a 7h shift with 20 dishes would read as 140 hours.
+    if (iMin >= 0 && Number(row[iMin]) > people[emp].minutes) {
+      people[emp].minutes = Number(row[iMin]);
+    }
+
+    if (!dishes[dish]) dishes[dish] = { dish: dish, letter: String(row[iLet] || ''), qty: 0, waste: 0 };
+    dishes[dish].qty   += qty;
+    dishes[dish].waste += waste;
+  }
+
+  if (!any) return empty;
+
+  var byPerson = Object.keys(people).map(function (k) {
+    var p = people[k];
+    p.perHour = p.minutes > 0 ? Math.round((p.dishes / (p.minutes / 60)) * 10) / 10 : null;
+    return p;
+  }).sort(function (a, b) { return b.dishes - a.dishes; });
+
+  var byDish = Object.keys(dishes).map(function (k) { return dishes[k]; })
+                     .sort(function (a, b) { return b.qty - a.qty; });
+
+  return {
+    ok: true, date: dateStr, hasData: true,
+    totalDishes: totalQty, totalWaste: totalWaste,
+    entries: Object.keys(entryIds).length,
+    people: byPerson.length,
+    byPerson: byPerson, byDish: byDish,
+    generatedAt: new Date().toISOString()
+  };
+}
+
+
+/** Sheets may hand back a Date object or a string for entry_date. */
+function formatCell_(v) {
+  if (v instanceof Date) {
+    return Utilities.formatDate(v, Session.getScriptTimeZone() || 'Europe/Berlin', 'yyyy-MM-dd');
+  }
+  return String(v || '').trim();
 }
 
 
