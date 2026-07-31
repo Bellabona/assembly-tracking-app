@@ -1,0 +1,65 @@
+# Keeps thumbs/ in sync with whatever DISH_IMAGES currently points at.
+#
+# The dish list is rewritten every week by a scheduled task. Until the thumbs are
+# rebuilt, the new dishes have no local thumbnail and index.html falls back to the
+# original S3 URL -- correct, but ~1.5 MB per tile on a kitchen phone. Rather than
+# relying on someone remembering to run tools/make-thumbs.sh, this runs on every
+# push that touches index.html, whatever made the change.
+#
+# Runs on macOS because make-thumbs.sh uses sips, so CI and a local run produce
+# byte-identical thumbs. The script skips any uuid that already has a decodable
+# thumb, so a re-run costs nothing and never churns existing files.
+name: Rebuild dish thumbnails
+
+on:
+  push:
+    branches: [main]
+    paths: ['index.html']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never let two rebuilds race on a push to the same branch.
+concurrency:
+  group: thumbnails-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  thumbnails:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cwebp
+        run: brew install webp
+
+      - name: Build any missing thumbnails
+        run: ./tools/make-thumbs.sh
+
+      - name: Commit thumbs/ and the manifest together
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain thumbs/ index.html)" ]; then
+            echo "Thumbnails already match the current menu - nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # thumbs/ and index.html go in ONE commit: a deployed index.html must
+          # never list a uuid whose thumb has not shipped yet.
+          git add thumbs/ index.html
+          # [skip ci] is belt-and-braces. Pushes authenticated with GITHUB_TOKEN
+          # do not retrigger workflows, so this cannot loop.
+          git commit -m "Rebuild dish thumbnails for the current menu [skip ci]"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Dish thumbnails"
+            echo ""
+            echo "- files: $(find thumbs -name '*.webp' | wc -l | tr -d ' ')"
+            echo "- total: $(find thumbs -name '*.webp' -exec wc -c {} \; | awk '{s+=$1} END {printf "%.0f KB", s/1024}')"
+          } >> "$GITHUB_STEP_SUMMARY"
