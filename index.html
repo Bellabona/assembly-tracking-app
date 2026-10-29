@@ -610,7 +610,22 @@ function thumbPathFor(url) {
   return known[uuid] ? "thumbs/" + uuid + ".webp" : "";
 }
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+// Where a shift goes.
+//
+// This used to post to a Google Apps Script that appended to a spreadsheet on a
+// personal Drive. In October 2026 that account ran out of storage, Google refused
+// every write, and this app read each refusal as "the entry was rejected" and threw
+// it away. Three weeks of shifts were lost and nothing anywhere said so. Entries now
+// go into the Bella&Bona P&L database and appear on
+// potsdam-pnl.vercel.app/admin/assembly within seconds.
+const API_URL = "https://potsdam-pnl.vercel.app/api/assembly";
+
+// A shared secret sitting in a page anyone can open, so it stops drive-by posts and
+// nothing more. That is the honest level of protection for a form a cook opens on
+// their own phone: shift counts are not a secret, the risk is noise. It travels in
+// the BODY rather than a header on purpose: a custom header would make this a
+// preflighted request, and a preflight is one more round trip to fail on kitchen wifi.
+const INGEST_TOKEN = "bbasm_dE_KB2ZZN7KFSuRuqnCiOWVJrPJpKEUKT01-uLK3PtQ";
 
 const EMPLOYEES = [
   "Joel","Jash","Varush","Hamid",
@@ -689,24 +704,19 @@ document.getElementById("date").value = getTodayLocal();
 // baseline. If the sheet has a Roster tab it wins, so a new hire can work their
 // first shift without waiting for a deploy. An EMPTY response never wins: that
 // would leave nobody able to submit.
-// Whether the Apps Script patch is live. An UNPATCHED doPost ignores `type` and
-// blindly appends date/employees/dishes, so a void_entry would land as a blank
-// row with nothing but a timestamp -- it did, 32 times, before this existed.
-// Undo therefore stays hidden until the backend can actually process it.
-let BACKEND_READY = null;
+// The old backend could not process a retraction at all, so undo had to be probed for
+// and stayed hidden until a reply proved otherwise. The current API handles it, so
+// there is nothing to probe and the button is simply there.
 
-async function refreshRosterFromSheet() {
+async function refreshRosterFromServer() {
   let names = null;
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 4000);
-    const res = await fetch(SCRIPT_URL + "?view=roster", { redirect: "follow", signal: ctrl.signal });
+    const res = await fetch(API_URL + "?view=roster", { redirect: "follow", signal: ctrl.signal });
     clearTimeout(t);
     if (res.ok) {
       const j = JSON.parse(await res.text());
-      // ?view=roster exists only in the patched script; an unpatched one answers
-      // with a health check that has no `employees` key.
-      BACKEND_READY = !!(j && Object.prototype.hasOwnProperty.call(j, "employees"));
       if (j && Array.isArray(j.employees) && j.employees.length) names = j.employees;
     }
   } catch (e) { return; }              // not deployed, offline, or slow: keep the baseline
@@ -758,7 +768,7 @@ const DISH_LETTERS = Object.keys(DISH_NAMES);
 const MAX_PER_DISH = 400;
 
 // Bumped when the payload shape changes, so rows can be interpreted later.
-const APP_VERSION = "2026.07.31";
+const APP_VERSION = "2026.10.29";
 
 // --- Language ----------------------------------------------------------------
 // German and English, per Abbas. Deliberately NOT auto-detected from the browser:
@@ -1027,13 +1037,14 @@ function submitForm() {
     startTime: document.getElementById("startTime").value || "",
     endTime: document.getElementById("endTime").value || "",
     shiftMinutes: shiftMinutes(),
+    token: INGEST_TOKEN,
     entryId: btn.dataset.entryId,
     clientTime: new Date().toISOString(),
     tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
     appVersion: APP_VERSION
   };
 
-  fetch(SCRIPT_URL, {
+  fetch(API_URL, {
     method: "POST",
     redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
@@ -1042,7 +1053,7 @@ function submitForm() {
   .then(async (res) => {
     if (!res.ok) throw new Error("server said HTTP "+res.status);
     const body = await res.text();
-    if (looksLikeSaveFailure(body)) throw new Error("the sheet rejected the entry");
+    if (looksLikeSaveFailure(body)) throw new Error("rejected the entry, " + firstError(body));
     clearDraft();
     noteSent(date, selectedEmployees[0], currentTotal(), payload.entryId);
     armUndo(payload);
@@ -1060,21 +1071,20 @@ function submitForm() {
     document.getElementById("successScreen").classList.add("visible");
   })
   .catch(err => {
-    // A rejected fetch means the request never reached the sheet: offline, DNS,
-    // captive portal. That is safe to retry unchanged, so queue it rather than
-    // making someone stand there re-tapping twenty numbers.
-    if (err && err.name === "TypeError") {
+    // Queue nearly everything now, which the new backend is what makes safe: it
+    // upserts on entryId, so sending the same entry twice updates one shift instead
+    // of writing two. Under the old sheet a replay could double-record, which is why
+    // a server error used to be left on screen for somebody to retype by hand. The
+    // one case still worth keeping on screen is the server saying this entry is
+    // malformed, because retrying it unchanged cannot fix it.
+    if (!err || !/rejected the entry/.test(err.message || "")) {
       queueEntry(payload);
       clearDraft();
       delete btn.dataset.entryId;
       showQueued(date, selectedEmployees, items, rolesStr);
       return;
     }
-    // Anything else came back FROM the server, so the entry may or may not have
-    // landed. Keep it on screen and let the person decide -- queueing here could
-    // double-record, and the id only protects us once the sheet has seen it.
-    const reason = (err && err.message) ? err.message : "no connection";
-    showError("\u274C NOT saved \u2014 " + reason + ". Your numbers are still on screen: check the connection and tap Submit Entry again. If it keeps failing, report it before closing this page.");
+    showError("\u274C NOT saved \u2014 " + err.message + ". Your numbers are still on screen: check them and tap Submit Entry again. If it keeps failing, tell your shift leader before closing this page.");
     btn.disabled = false; btn.textContent = t("submit");
   });
 }
@@ -1091,11 +1101,8 @@ let undoTimer = null;
 const UNDO_SECONDS = 60;
 
 function armUndo(payload) {
-  // Arm unless we KNOW the backend cannot process it. BACKEND_READY is still null
-  // for the first moment after load, and refusing then would silently drop the
-  // affordance for anyone quick. undoLast() re-checks before it posts, so an
-  // unpatched backend is still never sent a void_entry.
-  if (BACKEND_READY === false) { disarmUndo(); return; }
+  // Always armed. The old backend could not process a retraction, so this used to be
+  // withheld until a probe proved otherwise. The current one can, so it is simply here.
   undoState = { payload: payload, expires: Date.now() + UNDO_SECONDS * 1000 };
   const btn = document.getElementById("undoBtn");
   if (!btn) return;
@@ -1119,22 +1126,6 @@ function disarmUndo() {
   if (btn) { btn.hidden = true; btn.textContent = t("undo"); }
 }
 
-// Probe once, on demand, for callers that must not act on an unknown backend.
-async function ensureBackendProbed() {
-  if (BACKEND_READY !== null) return BACKEND_READY;
-  try {
-    const ctrl = new AbortController();
-    const t2 = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch(SCRIPT_URL + "?view=roster", { redirect: "follow", signal: ctrl.signal });
-    clearTimeout(t2);
-    if (res.ok) {
-      const j = JSON.parse(await res.text());
-      BACKEND_READY = !!(j && Object.prototype.hasOwnProperty.call(j, "employees"));
-    }
-  } catch (e) { /* leave null: unknown, try again next time */ }
-  return BACKEND_READY;
-}
-
 async function undoLast() {
   if (!undoState) return;
   const btn = document.getElementById("undoBtn");
@@ -1142,28 +1133,18 @@ async function undoLast() {
   btn.disabled = true;
   btn.textContent = t("undoing");
 
-  // Last line of defence: an unpatched doPost would turn this into a blank row
-  // AND leave the entry standing, so staff would believe it had been retracted.
-  const ready = await ensureBackendProbed();
-  if (ready === false) {
-    btn.disabled = true;
-    btn.hidden = true;
-    showError("⚠️ Undo is not available yet — the sheet cannot process it. "
-      + "The entry is saved. Ask your shift leader to correct it.");
-    return;
-  }
-
-  return fetch(SCRIPT_URL, {
+  return fetch(API_URL, {
     method: "POST", redirect: "follow",
     headers: {"Content-Type": "text/plain;charset=utf-8"},
-    body: JSON.stringify({ type: "void_entry", entryId: p.entryId, date: p.date,
+    body: JSON.stringify({ type: "void_entry", token: INGEST_TOKEN,
+                           entryId: p.entryId, date: p.date,
                            employees: p.employees, reason: "undo by user",
                            clientTime: new Date().toISOString(), appVersion: APP_VERSION })
   })
   .then(async res => {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const body = await res.text();
-    if (looksLikeSaveFailure(body)) throw new Error("the sheet refused the undo");
+    if (looksLikeSaveFailure(body)) throw new Error("the server refused the undo");
     // Drop it from the local "already submitted today" memory too, or the next
     // entry would warn about an entry that no longer counts.
     try {
@@ -1176,7 +1157,7 @@ async function undoLast() {
     if (ring) ring.textContent = "↩";
     if (title) title.textContent = t("undone");
     document.getElementById("successDetail").innerHTML =
-      "That entry has been marked void in the sheet.<br>Tap <strong>+ New Entry</strong> to record it again.";
+      "That entry has been marked void.<br>Tap <strong>+ New Entry</strong> to record it again.";
   })
   .catch(err => {
     btn.disabled = false;
@@ -1385,6 +1366,16 @@ function looksLikeSaveFailure(body) {
   return /<html|Exception|ScriptError|errorMessage/i.test(text);
 }
 
+// The server explains itself in `error`. Showing that beats "something went wrong",
+// because the person reading it is the person who can usually fix it.
+function firstError(body) {
+  try {
+    const j = JSON.parse((body || "").trim());
+    if (j && (j.error || j.errorMessage)) return String(j.error || j.errorMessage);
+  } catch (e) { /* not JSON */ }
+  return "the server did not say why";
+}
+
 // --- Shift hours, so throughput is derivable ---------------------------------
 // Counts alone cannot answer "dishes per hour", which is the number that makes
 // this data actionable. Two optional time fields are the cheapest way to get it:
@@ -1557,45 +1548,75 @@ function writeQueue(a) {
 function updateQueueBanner() {
   const el = document.getElementById("queueBanner");
   if (!el) return;
-  const n = readQueue().length;
-  if (!n) { el.classList.remove("visible"); el.textContent = ""; return; }
-  el.textContent = n + (n === 1 ? " entry is" : " entries are")
-    + " waiting to send. Keep this page open — it retries automatically.";
+  const q = readQueue();
+  if (!q.length) { el.classList.remove("visible"); el.textContent = ""; return; }
+  const stuck = q.filter(x => x.stuck);
+  const waiting = q.length - stuck.length;
+  const parts = [];
+  if (waiting) {
+    parts.push(waiting + (waiting === 1 ? " entry is" : " entries are")
+      + " waiting to send. Keep this page open, it retries automatically.");
+  }
+  if (stuck.length) {
+    // Said plainly, because the person reading it has to decide whether to act.
+    parts.push(stuck.length + (stuck.length === 1 ? " entry has" : " entries have")
+      + " not been accepted: " + (stuck[0].why || "the server did not say why")
+      + ". Nothing is lost, it is still on this phone. Tell your shift leader.");
+  }
+  el.textContent = parts.join(" ");
   el.classList.add("visible");
 }
+
+// How many refusals before an entry stops blocking the ones behind it. It is never
+// thrown away, it is set aside and reported.
+const MAX_TRIES = 5;
 
 let sending = false;
 async function flushQueue() {
   if (sending) return;
-  if (!readQueue().length) return;
   sending = true;
   try {
-    while (readQueue().length) {
-      const item = readQueue()[0];
-      let ok = false, fatal = false;
+    // Only entries that are still worth retrying. One the server keeps refusing is
+    // skipped so it cannot hold up a whole night's work behind it.
+    let pending = readQueue().filter(x => !x.stuck);
+    while (pending.length) {
+      const item = pending[0];
+      let ok = false, refused = false, why = "";
       try {
-        const res = await fetch(SCRIPT_URL, {
+        const res = await fetch(API_URL, {
           method: "POST", redirect: "follow",
           headers: {"Content-Type": "text/plain;charset=utf-8"},
           body: JSON.stringify(item.payload)
         });
-        if (!res.ok) { ok = false; }
-        else {
-          const body = await res.text();
-          if (looksLikeSaveFailure(body)) { fatal = true; }   // the sheet said no
-          else ok = true;
-        }
-      } catch (e) { ok = false; }                             // still no network
+        const body = await res.text();
+        if (res.ok && !looksLikeSaveFailure(body)) ok = true;
+        else { refused = true; why = firstError(body); }
+      } catch (e) { ok = false; }    // no network at all: not the entry's fault
 
-      if (!ok && !fatal) break;      // offline: stop, keep order, try again later
-      // Remove by id, not position: another submit during the await would
-      // otherwise let a shift() drop the wrong entry.
-      writeQueue(readQueue().filter(x => x.id !== item.id));
-      updateQueueBanner();
-      if (fatal) {
-        showError("⚠️ One queued entry was refused by the sheet and could not be saved."
-          + " Please re-enter it and tell your shift leader.");
+      if (ok) {
+        // Remove by id, not position: another submit during the await would
+        // otherwise let a shift() drop the wrong entry.
+        writeQueue(readQueue().filter(x => x.id !== item.id));
+      } else if (refused) {
+        /*
+         * NOTHING IS DELETED HERE, and that is the whole point of this pass.
+         *
+         * The old version removed an entry the server refused and told the cook to
+         * type it in again. When the spreadsheet ran out of storage every entry came
+         * back refused, so three weeks of shifts were discarded by this exact branch
+         * while everyone assumed they were saved. A refusal now costs a retry and a
+         * visible banner, never the data.
+         */
+        const q = readQueue().map(x => x.id === item.id
+          ? Object.assign({}, x, { tries: (x.tries || 0) + 1, why: why,
+                                   stuck: (x.tries || 0) + 1 >= MAX_TRIES })
+          : x);
+        writeQueue(q);
+      } else {
+        break;                       // offline: stop, keep order, try again later
       }
+      updateQueueBanner();
+      pending = readQueue().filter(x => !x.stuck);
     }
   } finally {
     sending = false;
@@ -1605,7 +1626,8 @@ async function flushQueue() {
 
 function queueEntry(payload) {
   const q = readQueue();
-  q.push({ id: payload.entryId || newEntryId(), queuedAt: Date.now(), payload: payload });
+  q.push({ id: payload.entryId || newEntryId(), queuedAt: Date.now(), tries: 0,
+           stuck: false, why: "", payload: payload });
   writeQueue(q);
   updateQueueBanner();
 }
@@ -1646,7 +1668,7 @@ updateDupeBanner();
 updateQueueBanner();
 flushQueue();
 // After restoreDraft, so a restored selection is never blown away by a refresh.
-refreshRosterFromSheet();
+refreshRosterFromServer();
 </script>
 </body>
 </html>
