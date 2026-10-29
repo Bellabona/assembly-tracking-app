@@ -630,9 +630,14 @@
   }
 
   @media (max-width: 560px) {
-    /* The title has the page, the rest wraps under it. Nothing is dropped. */
-    .header-title { width: 100%; margin-right: 0; }
-    .header-date { margin-right: auto; }
+    /*
+     * The header stops wrapping to a second row, which was costing 20px of a
+     * phone screen that the dish grid wants. The date comes out rather than the
+     * navigation, because the date field is the next thing down the page and
+     * says the same thing in a place you can actually change it.
+     */
+    .header-title { width: auto; margin-right: auto; }
+    .header-date { display: none; }
     .dishes { gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .time-row { flex-direction: column; }
     #submitBtn { min-width: 0; flex: 1; padding: 14px 20px; }
