@@ -276,78 +276,91 @@
 
   .emp-chip.disabled { opacity: 0.4; pointer-events: none; filter: none; }
 
-  /* ───────────────────────────── dishes ───────────────────────────── */
-
-  /*
-   * auto-fill rather than a fixed column count. The old grid forced four columns
-   * onto a phone and six onto everything wider, so a tile was 70px across on a
-   * handset and the dish photo was unreadable. A minimum width lets the browser
-   * choose the count, which is two on a small phone and as many as fit on a
-   * monitor, with every tile the same comfortable size.
+  /* ───────────────────────────── dishes ─────────────────────────────
+   *
+   * Rows, not cards, and that is a usability decision rather than a taste one.
+   *
+   * The card grid that preceded this looked better in a screenshot and was worse
+   * to work with. Measured on the live app: a 390px phone in glove mode showed
+   * ONE dish at a time and ran to sixteen screens for a twenty-four dish menu,
+   * because each card was 390px tall and 42% of it was a photograph. A cook in
+   * gloves at 22:00 was scrolling, not counting.
+   *
+   * A row is about 60px. The same menu is one desktop screen and two phone
+   * screens, and glove mode still shows ten at once.
+   *
+   * The order of things across the row follows the order of the job: the letter
+   * on the sticker in your hand, the photo that confirms it, the name, what you
+   * have counted so far, and the two buttons you press. Waste sits last because
+   * it is the exception, not the task.
+   *
+   * Every element below is placed with grid-column on the markup the script
+   * already builds. Nothing was added, removed or reordered in the DOM.
    */
+
   .dishes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-    gap: 14px;
+    display: flex; flex-direction: column; gap: 0;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-sm);
   }
 
   .dish {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 0 0 10px;
-    text-align: left;
-    box-shadow: var(--shadow-sm);
-    transition: border-color 0.15s, box-shadow 0.15s;
-    position: relative; overflow: hidden; cursor: pointer;
-    /* Two columns so the letter badge and the dish name share a line without
-       needing a wrapper element the script does not create. */
     display: grid;
-    grid-template-columns: auto 1fr;
-    align-content: start;
-    column-gap: 8px;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    column-gap: 10px;
+    padding: 8px 12px;
+    background: var(--card);
+    border: none; border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    text-align: left;
+    box-shadow: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.12s;
     backdrop-filter: none; -webkit-backdrop-filter: none;
   }
-  .dish:hover { border-color: var(--line-2); box-shadow: var(--shadow); }
-  .dish::before { display: none; }   /* the old glow */
+  .dish:last-child { border-bottom: none; }
+  .dish:hover { background: var(--brand-softer); }
+  .dish::before { display: none; }
+
+  /* The letter is the primary key: it is what is printed on the sticker and it
+     is what someone is scanning the list for. It was 12.5px in the card version,
+     smaller than the count. */
+  .dish .letter {
+    grid-column: 1; grid-row: 1;
+    margin: 0; padding: 0 6px;
+    min-width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; background: var(--brand-soft); color: var(--brand);
+    font-size: 16px; font-weight: 750; line-height: 1; letter-spacing: 0;
+    transition: background 0.12s, color 0.12s;
+  }
 
   .dish-img {
-    grid-column: 1 / -1;
-    width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
-    border-radius: 0; margin: 0 0 10px; display: block;
-    background: var(--brand-soft);
+    grid-column: 2; grid-row: 1;
+    width: 38px; height: 38px; aspect-ratio: auto;
+    object-fit: cover; border-radius: 8px;
+    margin: 0; display: block; background: var(--brand-soft);
   }
 
-  .dish .letter {
-    grid-column: 1; align-self: start; margin-top: 1px;
-    margin: 1px 0 0 10px; padding: 0 7px; min-width: 24px; height: 22px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 6px; background: var(--brand-soft); color: var(--brand);
-    font-size: 12.5px; font-weight: 750; line-height: 1; letter-spacing: 0.01em;
-    transition: background 0.15s, color 0.15s;
-  }
-  /*
-   * Two lines are reserved whether the name needs them or not. Without it a
-   * one-line name pulls its count, buttons and waste row up by sixteen pixels
-   * and the grid reads as ragged, which is most of what "unbalanced" meant.
-   */
   .dish .dish-name {
-    grid-column: 2; align-self: start; margin: 0 10px 0 0;
-    font-size: 12.5px; font-weight: 550; color: var(--ink-2);
-    line-height: 1.3; min-height: 33px;
+    grid-column: 3; grid-row: 1; align-self: center;
+    margin: 0;
+    font-size: 14px; font-weight: 550; color: var(--ink);
+    line-height: 1.25; min-height: 0;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; transition: color 0.15s;
+    overflow: hidden;
   }
 
-  /* The count is the number people read across the pass, so it is the loudest
-     thing on the card. */
   .dish input[type="number"] {
-    grid-column: 1 / -1;
-    width: calc(100% - 20px); margin: 10px 10px 0;
-    padding: 8px 4px; border-radius: var(--radius-sm);
+    grid-column: 4; grid-row: 1;
+    width: 54px; margin: 0;
+    padding: 7px 2px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--card-2);
     color: var(--ink);
-    font-size: 24px; font-weight: 700; font-family: inherit;
+    font-size: 18px; font-weight: 700; font-family: inherit;
     text-align: center; letter-spacing: -0.01em;
     outline: none; transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
     -webkit-appearance: none; pointer-events: none;
@@ -362,62 +375,66 @@
   .dish input[type="number"]::-webkit-inner-spin-button,
   .dish input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-  /* A tile holding a count is edged in green down its left side. A tinted fill
-     was tried and lost: with half the grid filled, twenty tinted cards is just
-     a green screen again. */
-  .dish.has-value {
-    border-color: var(--lime-deep);
-    box-shadow: inset 3px 0 0 var(--lime-deep), var(--shadow-sm);
-  }
-  .dish.has-value .letter { background: var(--lime); color: var(--brand-dark); }
-  .dish.has-value .dish-name { color: var(--ink); }
-  .dish.has-value input[type="number"] {
-    border-color: var(--lime-deep); color: var(--brand); background: #FFFFFF;
-  }
-
-  /* +1 / +10 */
-  .bump {
-    grid-column: 1 / -1;
-    display: flex; gap: 8px; margin: 8px 10px 0;
-  }
+  .bump { grid-column: 5; grid-row: 1; display: flex; gap: 6px; margin: 0; }
   .bump-btn {
-    flex: 1; min-height: 44px; border-radius: var(--radius-sm);
+    flex: none; width: 48px; min-height: 44px; border-radius: 8px;
     border: 1px solid var(--line-2); background: var(--card);
-    color: var(--brand); font-size: 15px; font-weight: 700;
+    color: var(--brand); font-size: 14px; font-weight: 700;
     font-family: inherit; cursor: pointer; padding: 0;
-    transition: background 0.12s, border-color 0.12s, transform 0.06s;
+    transition: background 0.1s, border-color 0.1s, transform 0.06s;
     touch-action: manipulation;
   }
   .bump-btn:hover { background: var(--brand-soft); border-color: var(--brand-mid); }
-  .bump-btn:active { transform: scale(0.96); background: var(--lime); border-color: var(--lime-deep); color: var(--brand-dark); }
+  .bump-btn:active { transform: scale(0.94); background: var(--lime); border-color: var(--lime-deep); color: var(--brand-dark); }
 
-  /* Waste. Below a hairline, quieter than the count, and coloured only once it
-     is not zero, so it reads as the exception it should be. */
+  /* Waste keeps its own box at the end of the row, quiet until it is not zero. */
   .waste-row {
-    grid-column: 1 / -1;
-    display: flex; align-items: center; gap: 8px;
-    margin: 10px 10px 0; padding-top: 9px;
-    border-top: 1px solid var(--line);
+    grid-column: 6; grid-row: 1;
+    display: flex; align-items: center; gap: 6px;
+    margin: 0; padding: 0; border-top: none;
   }
   .waste-lab {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--faint); flex-shrink: 0;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--faint); flex-shrink: 0;
   }
   .waste-inp {
-    flex: 1; min-width: 0; height: 32px; padding: 0 6px;
-    border-radius: 8px; border: 1px solid var(--line);
-    background: var(--card-2); color: var(--ink-2);
+    width: 44px; flex: none; height: 36px; padding: 0 4px;
+    border-radius: 8px; border: 1px dashed var(--line-2);
+    background: transparent; color: var(--ink-2);
     font-size: 14px; font-weight: 650; font-family: inherit; text-align: center;
     outline: none; -webkit-appearance: none;
     transition: border-color 0.12s, background 0.12s, color 0.12s;
   }
-  .waste-inp::placeholder { color: var(--faint); font-weight: 600; }
+  .waste-inp::placeholder { color: var(--faint); font-weight: 500; }
   .waste-inp::-webkit-inner-spin-button, .waste-inp::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .waste-inp:focus { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(179,38,30,0.12); }
+  .waste-inp:focus { border-style: solid; border-color: var(--danger); box-shadow: 0 0 0 3px rgba(179,38,30,0.12); }
+
+  /* A counted row is marked on its left edge and in its letter, which reads down
+     a long list far faster than a tinted background does. */
+  .dish.has-value { background: #FFFFFF; box-shadow: inset 4px 0 0 var(--lime-deep); }
+  .dish.has-value:hover { background: var(--brand-softer); }
+  .dish.has-value .letter { background: var(--lime); color: var(--brand-dark); }
+  .dish.has-value .dish-name { font-weight: 650; }
+  .dish.has-value input[type="number"] { border-color: var(--lime-deep); color: var(--brand); background: #FFFFFF; }
+
   .dish.has-waste .waste-inp {
-    border-color: var(--danger-line); background: var(--danger-bg); color: var(--danger);
+    border-style: solid; border-color: var(--danger-line);
+    background: var(--danger-bg); color: var(--danger);
   }
   .dish.has-waste .waste-lab { color: var(--danger); }
+
+  /* Two columns of rows once the screen is wide enough to hold them, which puts
+     a whole menu on one screen without making any row shorter. */
+  @media (min-width: 1080px) {
+    .dishes {
+      display: grid; grid-template-columns: 1fr 1fr;
+      column-gap: 0; align-items: start;
+    }
+    .dish:nth-child(odd) { border-right: 1px solid var(--line); }
+    /* The last row of a two-column grid should not draw a floor under itself. */
+    .dish:nth-last-child(-n+2) { border-bottom: none; }
+    .dish:nth-child(odd):last-child { border-right: none; }
+  }
 
   /* ──────────────────────── hours, role, comment ──────────────────────── */
 
@@ -600,13 +617,16 @@
      Deliberately not just "bigger". Fewer, larger tiles and larger targets,
      with the same information and the same controls. */
 
-  body.glove .dishes { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
-  body.glove .dish .letter { height: 28px; min-width: 30px; font-size: 15px; }
-  body.glove .dish .dish-name { font-size: 15px; min-height: 39px; }
-  body.glove .dish input[type="number"] { font-size: 32px; padding: 12px 4px; }
-  body.glove .bump-btn { min-height: 56px; font-size: 18px; }
-  body.glove .waste-lab { font-size: 12px; }
-  body.glove .waste-inp { height: 40px; font-size: 16px; }
+  /* Taller rows and bigger targets, not a different layout. The old glove mode
+     turned the grid into huge cards and left one dish on a phone screen. */
+  body.glove .dish { padding: 11px 14px; column-gap: 12px; }
+  body.glove .dish .letter { height: 42px; min-width: 42px; font-size: 20px; border-radius: 10px; }
+  body.glove .dish-img { width: 48px; height: 48px; }
+  body.glove .dish .dish-name { font-size: 16px; -webkit-line-clamp: 2; }
+  body.glove .dish input[type="number"] { width: 64px; font-size: 22px; padding: 11px 2px; }
+  body.glove .bump-btn { width: 58px; min-height: 56px; font-size: 17px; }
+  body.glove .waste-lab { font-size: 11px; }
+  body.glove .waste-inp { width: 52px; height: 48px; font-size: 16px; }
   body.glove .emp-chip { padding: 10px 18px 10px 10px; }
   body.glove .emp-chip .avatar { width: 44px; height: 44px; font-size: 16px; }
   body.glove .emp-chip .emp-name { font-size: 16px; }
@@ -638,7 +658,18 @@
      */
     .header-title { width: auto; margin-right: auto; }
     .header-date { display: none; }
-    .dishes { gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    /* The row still fits on one line at 360px. The word "waste" is what goes:
+       the dashed box at the end of the row is already unambiguous, and the
+       letter and photo are doing the identifying. */
+    .dish { padding: 7px 10px; column-gap: 8px; }
+    .waste-lab { display: none; }
+    .dish .letter { min-width: 30px; height: 30px; font-size: 15px; }
+    .dish-img { width: 34px; height: 34px; }
+    .dish .dish-name { font-size: 13px; }
+    .dish input[type="number"] { width: 46px; font-size: 17px; }
+    .bump-btn { width: 44px; font-size: 13px; }
+    .waste-inp { width: 40px; }
+    body.glove .waste-lab { display: none; }
     .time-row { flex-direction: column; }
     #submitBtn { min-width: 0; flex: 1; padding: 14px 20px; }
     .submit-total { flex: 0 1 auto; font-size: 12.5px; }
