@@ -18,11 +18,17 @@
  *       means a departed colleague reappears, so: NETWORK FIRST.
  *
  * Submissions are never touched by this worker. They are POSTs, and the pages
- * own their retry queues in localStorage; intercepting them here would put the
+ * own their retry queues in localStorage. Intercepting them here would put the
  * same entry in two places with two different ideas of whether it was sent.
+ *
+ * The backend moved in October 2026 from a Google Apps Script to the Bella&Bona
+ * P&L API. Both hostnames are excluded below rather than only the new one: a
+ * phone that has not opened the app since the move still has the old worker
+ * installed, and the first thing the new one must not do is start caching
+ * anything that belongs to a backend.
  */
 
-const VERSION    = 'v3-2026-07-31';
+const VERSION    = 'v4-2026-10-29';
 const SHELL      = 'bb-shell-'  + VERSION;
 const IMG        = 'bb-img-'    + VERSION;
 
@@ -110,15 +116,18 @@ async function networkFirst(request, cacheName) {
 self.addEventListener('fetch', event => {
   const request = event.request;
 
-  // Only GET is ours. Submissions (POST to the Apps Script) are owned by the
-  // pages' own outboxes -- see the comment at the top.
+  // Only GET is ours. Submissions are POSTs and are owned by the pages' own
+  // outboxes -- see the comment at the top.
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // Never cache or interfere with the backend, on any method.
+  // Never cache or interfere with the backend, on any method. A cached roster or
+  // a cached health check is worse than no answer: it would tell the app the
+  // server said something it did not say.
   if (url.hostname.endsWith('script.google.com') ||
-      url.hostname.endsWith('googleusercontent.com')) return;
+      url.hostname.endsWith('googleusercontent.com') ||
+      url.hostname === 'potsdam-pnl.vercel.app') return;
 
   // Cross-origin images (the S3 dish-photo fallback) are worth keeping.
   if (url.origin !== self.location.origin) {
