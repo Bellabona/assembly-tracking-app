@@ -1925,7 +1925,16 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-document.getElementById("date").addEventListener("change", () => { saveDraft(); updateDupeBanner(); });
+document.getElementById("date").addEventListener("change", () => {
+  saveDraft(); updateDupeBanner();
+  /*
+   * The letters belong to a week, not to the app, so moving the date to another
+   * week has to move the menu with it. Someone catching up on Monday for last
+   * Friday would otherwise record Friday's trays against this week's dish names,
+   * which is the exact mistake this whole change exists to stop.
+   */
+  refreshMenuFromServer();
+});
 document.getElementById("comment").addEventListener("input", saveDraft);
 ["startTime","endTime"].forEach(id => {
   document.getElementById(id).addEventListener("change", () => { updateRate(); saveDraft(); });
