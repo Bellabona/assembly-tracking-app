@@ -446,6 +446,60 @@
     .dish:nth-child(odd):last-child { border-right: none; }
   }
 
+  /*
+   * A colour per sticker letter.
+   *
+   * The letter is what a cook is holding and what they scan for, so it carries a
+   * second cue beside the glyph. The hues run in alphabetical order, so the ramp
+   * itself says roughly where you are in the list before you have read anything.
+   *
+   * Keyed on the tile id: the LETTER owns the colour, not the dish. P is the same
+   * colour next week, which is the only way anybody learns it.
+   *
+   * Two things here were found by rendering it rather than by reasoning. Lightness
+   * is tuned per hue, because a yellow-green has to go darker than a blue to carry
+   * white text at the same weight, and one fixed lightness left F under the
+   * readable threshold. And the weight alternates letter to letter, because an even
+   * hue ramp made D through L one band of olive and green that an eye cannot
+   * separate at a glance, green being both the worst hue range for that and our own
+   * brand colour. Neighbours now differ in value as well as hue.
+   *
+   * Every colour clears 4.5:1 against white, so the glyph stays legible for anyone
+   * who finds colour hard to tell apart. Colour is the second cue, never the only
+   * one.
+   */
+  .dish .letter { color: #FFFFFF; font-weight: 750; }
+  #tile_A .letter { background: #BE2D2D; }
+  #tile_B .letter { background: #7E3721; }
+  #tile_C .letter { background: #A56127; }
+  #tile_D .letter { background: #5D4819; }
+  #tile_E .letter { background: #7A731D; }
+  #tile_F .letter { background: #475115; }
+  #tile_G .letter { background: #577C1D; }
+  #tile_H .letter { background: #2F5517; }
+  #tile_I .letter { background: #2D811E; }
+  #tile_J .letter { background: #17571C; }
+  #tile_K .letter { background: #1F833D; }
+  #tile_L .letter { background: #17573A; }
+  #tile_M .letter { background: #1E7F69; }
+  #tile_N .letter { background: #175555; }
+  #tile_O .letter { background: #237A95; }
+  #tile_P .letter { background: #204F77; }
+  #tile_Q .letter { background: #2D59BE; }
+  #tile_R .letter { background: #313BB8; }
+  #tile_S .letter { background: #432DBE; }
+  #tile_T .letter { background: #5E2DAB; }
+  #tile_U .letter { background: #862DBE; }
+  #tile_V .letter { background: #7A2489; }
+  #tile_W .letter { background: #BE2DB3; }
+  #tile_X .letter { background: #862468; }
+  #tile_Y .letter { background: #BE2D70; }
+  #tile_Z .letter { background: #8C253D; }
+
+  /* A counted row is already edged in green with a green-bordered count, so the
+     letter keeps its identity colour instead of turning lime and losing it. */
+  .dish.has-value .letter { color: #FFFFFF; }
+
   /* ──────────────────────── hours, role, comment ──────────────────────── */
 
   .time-row { display: flex; gap: 12px; }
