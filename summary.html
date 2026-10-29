@@ -1,102 +1,126 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#062018" />
+<meta name="theme-color" content="#0B4A33" />
 <title>BellaBona &#127837; Assembly Summary</title>
 <style>
+  /* Bella & Bona — Assembly Summary.
+     Same design system as the entry screen. The markup and every render function
+     in this page are unchanged; only the surface they draw on is new. */
   :root {
-    --bg:#062018; --surface:rgba(255,255,255,0.055); --surface2:rgba(255,255,255,0.09);
-    --border:rgba(142,219,90,0.18); --border2:rgba(255,255,255,0.10);
-    --accent:#8EDB5A; --accent2:#b7ec92; --text:#F3F7F0; --muted:#9fbaa6;
-    --danger:#ff6b6b; --warn:#F0A34A; --radius:18px;
+    --brand:#0B4A33; --brand-dark:#06301F; --brand-mid:#116044;
+    --brand-soft:#E8F1EB; --brand-softer:#F2F7F3;
+    --lime:#8EDB5A; --lime-ink:#3E7A1F; --lime-deep:#6BC23F;
+    --bg:#F4F6F3; --card:#FFFFFF; --card-2:#FAFBF9;
+    --line:#E2E7E1; --line-2:#D3DAD2;
+    --ink:#16211B; --ink-2:#425049; --muted:#6E7D74; --faint:#93A098;
+    --danger:#B3261E; --danger-bg:#FDECEA; --danger-line:#F3C9C4;
+    --warn:#8A5A09; --warn-bg:#FDF4E3; --warn-line:#EFDCB4;
+    --radius:14px; --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(16,36,27,0.05);
+    --shadow:0 2px 8px rgba(16,36,27,0.06);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
-    background:#062018; color:var(--text); margin:0; min-height:100dvh;
-    background-image:
-      radial-gradient(1200px 820px at 12% -12%, rgba(142,219,90,0.15), transparent 55%),
-      linear-gradient(162deg,#0a4a37 0%,#083B2D 42%,#062018 74%,#04140f 100%);
-    background-attachment:fixed;
+    font-family:var(--font); background:var(--bg); color:var(--ink);
+    margin:0; min-height:100dvh; -webkit-font-smoothing:antialiased;
   }
+  :focus-visible { outline:3px solid var(--lime-deep); outline-offset:2px; border-radius:4px; }
+
   header {
     position:sticky; top:0; z-index:10;
-    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
-    background:linear-gradient(180deg,rgba(8,59,45,0.94),rgba(6,32,24,0.80));
-    backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
-    border-bottom:1px solid var(--border);
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:calc(10px + env(safe-area-inset-top)) 20px 10px;
+    background:var(--brand); border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
   }
-  h1 { font-size:16px; font-weight:800; margin:0; letter-spacing:0.2px; }
-  .sub { font-size:11px; color:var(--accent); font-weight:600; margin-top:2px; }
-  header a { color:var(--muted); font-size:11px; font-weight:700; text-decoration:none; }
-  header a:hover { color:var(--accent2); }
-  main { padding:16px 16px calc(28px + env(safe-area-inset-bottom)); max-width:860px; margin:auto; }
+  h1 { font-size:15px; font-weight:650; margin:0; letter-spacing:-0.01em; color:#FFFFFF; }
+  .sub { font-size:12px; color:rgba(255,255,255,0.72); font-weight:550; margin-top:2px; }
+  header a {
+    color:rgba(255,255,255,0.72); font-size:12.5px; font-weight:550;
+    text-decoration:none; white-space:nowrap; transition:color 0.15s;
+  }
+  header a:hover { color:#FFFFFF; }
 
-  .datebar { display:flex; gap:9px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  main { padding:20px 20px calc(32px + env(safe-area-inset-bottom)); max-width:1100px; margin:auto; }
+
+  .datebar { display:flex; gap:10px; align-items:center; margin-bottom:22px; flex-wrap:wrap; }
   .datebar input[type=date] {
-    background:var(--surface); border:1px solid var(--border); color:var(--text);
-    border-radius:12px; padding:11px 13px; font-size:15px; font-weight:700;
-    font-family:inherit; outline:none; color-scheme:dark; flex:1; min-width:150px;
+    background:var(--card); border:1px solid var(--line); color:var(--ink);
+    border-radius:var(--radius); padding:0 14px; height:48px; font-size:16px; font-weight:600;
+    font-family:inherit; outline:none; color-scheme:light; flex:1; min-width:170px; max-width:260px;
+    box-shadow:var(--shadow-sm); transition:border-color 0.15s, box-shadow 0.15s;
   }
+  .datebar input[type=date]:focus { border-color:var(--brand-mid); box-shadow:0 0 0 3px rgba(17,96,68,0.12); }
   .datebar button {
-    background:var(--surface2); border:1px solid var(--border2); color:var(--text);
-    border-radius:12px; padding:11px 15px; font-size:13px; font-weight:700;
-    font-family:inherit; cursor:pointer; min-height:44px;
+    background:var(--card); border:1px solid var(--line-2); color:var(--ink-2);
+    border-radius:var(--radius); padding:0 16px; font-size:14px; font-weight:600;
+    font-family:inherit; cursor:pointer; min-height:48px;
+    box-shadow:var(--shadow-sm); transition:background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .datebar button:hover { border-color:var(--accent); color:var(--accent2); }
+  .datebar button:hover { background:var(--brand-soft); border-color:var(--brand-mid); color:var(--brand); }
+  .datebar button:active { transform:scale(0.98); }
 
-  /* Stat tiles. One row of the few numbers a shift leader actually acts on. */
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
-  @media (max-width:560px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  /* The few numbers a shift leader acts on. */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  @media (max-width:640px) { .stats { grid-template-columns:repeat(2,1fr); } }
   .stat {
-    background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius);
-    padding:14px 13px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; box-shadow:var(--shadow-sm);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
   }
   .stat .k {
-    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
-    color:var(--muted); margin-bottom:6px;
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--muted); margin-bottom:8px;
   }
-  .stat .v { font-size:26px; font-weight:800; line-height:1; color:var(--accent2); }
-  .stat .v.small { font-size:19px; }
+  .stat .v { font-size:30px; font-weight:700; line-height:1; color:var(--ink); letter-spacing:-0.02em; }
+  .stat .v.small { font-size:22px; }
+  .stat.warn { border-color:var(--warn-line); background:var(--warn-bg); }
   .stat.warn .v { color:var(--warn); }
 
   h2 {
-    font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
-    color:var(--accent); margin:22px 0 10px; display:flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--muted); margin:28px 0 10px; display:flex; align-items:center; gap:10px;
   }
-  h2::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+  h2::after { content:''; flex:1; height:1px; background:var(--line); }
 
   .card {
-    background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius);
-    overflow:hidden; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; box-shadow:var(--shadow-sm);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
   }
   .tablewrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:13px; min-width:420px; }
-  th, td { padding:11px 13px; text-align:left; white-space:nowrap; }
+  table { width:100%; border-collapse:collapse; font-size:14px; min-width:460px; }
+  th, td { padding:13px 16px; text-align:left; white-space:nowrap; }
   th {
-    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;
-    color:var(--muted); border-bottom:1px solid var(--border2);
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--muted); border-bottom:1px solid var(--line); background:var(--card-2);
   }
-  td { border-bottom:1px solid rgba(255,255,255,0.05); }
-  tr:last-child td { border-bottom:none; }
-  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
-  td.name { font-weight:700; }
+  td { border-bottom:1px solid var(--line); color:var(--ink-2); }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:var(--brand-softer); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:650; }
+  td.name { font-weight:650; color:var(--ink); white-space:normal; }
   .waste { color:var(--danger); }
-  .zero { color:var(--muted); font-weight:400; }
+  .zero { color:var(--faint); font-weight:500; }
 
   /* Share-of-total bar behind the dish rows: the mix is easier to see than read. */
-  .barcell { position:relative; min-width:120px; }
+  .barcell { position:relative; min-width:160px; }
   .bar {
-    position:absolute; left:0; top:50%; transform:translateY(-50%);
-    height:20px; border-radius:5px;
-    background:linear-gradient(90deg,rgba(142,219,90,0.34),rgba(142,219,90,0.12));
+    position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    height:22px; border-radius:5px;
+    background:var(--brand-soft);
   }
-  .barlabel { position:relative; padding-left:8px; font-variant-numeric:tabular-nums; font-weight:700; }
+  .barlabel { position:relative; padding-left:10px; font-variant-numeric:tabular-nums; font-weight:650; color:var(--ink); }
 
-  .msg { padding:22px 18px; text-align:center; color:var(--muted); font-size:14px; line-height:1.6; }
-  .msg strong { color:var(--text); display:block; margin-bottom:6px; font-size:15px; }
-  .msg.err { color:#ff9b9b; }
-  .foot { margin-top:22px; text-align:center; font-size:11px; color:var(--muted); line-height:1.7; }
+  .msg { padding:28px 20px; text-align:center; color:var(--muted); font-size:14px; line-height:1.65; }
+  .msg strong { color:var(--ink); display:block; margin-bottom:8px; font-size:15px; font-weight:650; }
+  .msg.err { color:var(--danger); }
+  .msg code {
+    background:var(--brand-softer); border:1px solid var(--line); border-radius:5px;
+    padding:1px 5px; font-size:12.5px;
+  }
+  .foot { margin-top:24px; text-align:center; font-size:12px; color:var(--faint); line-height:1.7; }
+
 </style>
 
 <header>
@@ -105,8 +129,7 @@
     <div class="sub" id="sub">Loading…</div>
   </div>
   <div style="text-align:right">
-    <a href="index.html">&lsaquo; Entry form</a><br>
-    <a href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
+    <a href="index.html">&lsaquo; Entry form</a>
   </div>
 </header>
 
@@ -131,7 +154,10 @@
 </main>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvz8zUDJp7D3Ei4aqS3qQ9rp8clITa1_Vy8o_mVnqC2K6TXntM5CKYvklfaIJ4fQ8tnw/exec";
+// The Apps Script this used to read is gone, which is why this page showed
+// nothing from October onwards. Same query, same answer shape, new address.
+const API_URL = "https://potsdam-pnl.vercel.app/api/assembly";
+const INGEST_TOKEN = "bbasm_dE_KB2ZZN7KFSuRuqnCiOWVJrPJpKEUKT01-uLK3PtQ";
 
 function esc(s) {
   return String(s == null ? "" : s)
@@ -220,13 +246,14 @@ async function load(date) {
 
   let data = null;
   try {
-    const res = await fetch(SCRIPT_URL+"?view=today&date="+encodeURIComponent(date), { redirect:"follow" });
+    const res = await fetch(API_URL+"?view=today&date="+encodeURIComponent(date),
+                            { redirect:"follow", headers:{ "Authorization":"Bearer "+INGEST_TOKEN } });
     if (!res.ok) throw new Error("HTTP "+res.status);
     const body = await res.text();
     try { data = JSON.parse(body); }
     catch (e) {
-      // An Apps Script that has not had the patch applied answers a bare GET with
-      // its health-check JSON, and an erroring one answers with an HTML page.
+      // A proxy, a captive portal or a login page answers with HTML rather than
+      // JSON. Say that it was not summary data rather than guessing why.
       throw new Error("the backend did not return summary data");
     }
     if (data && data.ok === false) throw new Error(data.error || "the backend reported an error");
@@ -241,16 +268,12 @@ async function load(date) {
     document.getElementById("sub").textContent = date;
     const notPatched = err && err.message === "__NOT_PATCHED__";
     showMessage("people", notPatched
-      ? '<strong>Recording is not switched on yet</strong>'
-        + 'The backend answered, but it does not have the summary endpoint, so there is '
-        + 'nothing for this page to read yet.<br><br>'
-        + 'Apply <code>tools/apps-script-doPost.gs</code> to the Apps Script project and '
-        + 'redeploy the existing deployment. Entries staff submit are still being saved to '
-        + 'the main sheet in the meantime — only this view is waiting.'
+      ? '<strong>The backend answered, but not with a summary</strong>'
+        + 'Something between this page and the server replied in its place, which is usually '
+        + 'kitchen wifi asking you to sign in. Entries staff submit are unaffected.'
       : '<strong>Could not load</strong>'+esc((err && err.message) || "no connection")
-        + '<br><br>If this is the first time: the Apps Script patch in '
-        + '<code>tools/apps-script-doPost.gs</code> has to be applied before this page '
-        + 'has anything to read.', true);
+        + '<br><br>Entries staff submit are unaffected by this: only this view could not '
+        + 'read them. The same numbers are on the Assembly screen in the P&amp;L.', true);
     showMessage("dishes", "—");
     return;
   }

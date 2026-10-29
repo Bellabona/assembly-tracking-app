@@ -6,7 +6,7 @@
  * That tension is the whole design. The two kinds of content here have opposite
  * caching needs:
  *
- *   index.html / kitchen-tasks.html  change EVERY WEEK when the scheduled task
+ *   index.html  changes EVERY WEEK when the scheduled task
  *       rewrites the menu. Serving these cache-first would show last week's
  *       dishes with this week's letters -- silently wrong, and worse than being
  *       offline. So: NETWORK FIRST, cache only as the offline fallback.
@@ -28,7 +28,7 @@
  * anything that belongs to a backend.
  */
 
-const VERSION    = 'v4-2026-10-29';
+const VERSION    = 'v5-2026-10-29';
 const SHELL      = 'bb-shell-'  + VERSION;
 const IMG        = 'bb-img-'    + VERSION;
 
@@ -37,7 +37,6 @@ const IMG        = 'bb-img-'    + VERSION;
 const SHELL_URLS = [
   './',
   './index.html',
-  './kitchen-tasks.html',
   './roster.json',
   './manifest.webmanifest',
   './icons/icon-192.png',

@@ -127,7 +127,7 @@
   /* One row, aligned on the baseline, instead of a stack of right-aligned
      fragments. Everything after the wordmark is navigation and settings. */
   .header-right {
-    margin-left: auto;
+    flex: 1; min-width: 0;
     display: flex; align-items: center; gap: 6px 18px;
     flex-wrap: wrap; justify-content: flex-end; text-align: left;
   }
@@ -319,17 +319,22 @@
   }
 
   .dish .letter {
-    grid-column: 1; align-self: center;
-    margin: 0 0 0 10px; padding: 0 7px; min-width: 24px; height: 22px;
+    grid-column: 1; align-self: start; margin-top: 1px;
+    margin: 1px 0 0 10px; padding: 0 7px; min-width: 24px; height: 22px;
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 6px; background: var(--brand-soft); color: var(--brand);
     font-size: 12.5px; font-weight: 750; line-height: 1; letter-spacing: 0.01em;
     transition: background 0.15s, color 0.15s;
   }
+  /*
+   * Two lines are reserved whether the name needs them or not. Without it a
+   * one-line name pulls its count, buttons and waste row up by sixteen pixels
+   * and the grid reads as ragged, which is most of what "unbalanced" meant.
+   */
   .dish .dish-name {
-    grid-column: 2; align-self: center; margin: 0 10px 0 0;
+    grid-column: 2; align-self: start; margin: 0 10px 0 0;
     font-size: 12.5px; font-weight: 550; color: var(--ink-2);
-    line-height: 1.3; min-height: 0;
+    line-height: 1.3; min-height: 33px;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     overflow: hidden; transition: color 0.15s;
   }
@@ -512,14 +517,13 @@
    */
   .submit-bar {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    padding: 12px max(20px, calc((100% - 1280px) / 2)) calc(12px + env(safe-area-inset-bottom));
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--line);
     box-shadow: var(--shadow-lg);
     display: flex; align-items: center; gap: 16px;
   }
-  .submit-bar > * { max-width: 1280px; }
   .submit-total {
     font-size: 13px; font-weight: 650; letter-spacing: 0.02em;
     text-transform: none; color: var(--ink-2);
@@ -598,7 +602,7 @@
 
   body.glove .dishes { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
   body.glove .dish .letter { height: 28px; min-width: 30px; font-size: 15px; }
-  body.glove .dish .dish-name { font-size: 15px; }
+  body.glove .dish .dish-name { font-size: 15px; min-height: 39px; }
   body.glove .dish input[type="number"] { font-size: 32px; padding: 12px 4px; }
   body.glove .bump-btn { min-height: 56px; font-size: 18px; }
   body.glove .waste-lab { font-size: 12px; }
@@ -622,6 +626,7 @@
     .header-title { font-size: 13px; }
     .content { padding-left: 16px; padding-right: 16px; }
     .submit-bar { padding-left: 16px; padding-right: 16px; }
+    .submit-bar { padding-left: max(16px, calc((100% - 1280px) / 2)); padding-right: max(16px, calc((100% - 1280px) / 2)); }
   }
 
   @media (max-width: 560px) {
@@ -654,10 +659,7 @@
   <div class="header-right">
     <div class="header-title">Assembly Tracking</div>
     <div class="header-date" id="headerDate"></div>
-    <!-- The kitchen-tasks page went 100 days without an update partly because
-         nothing linked to it. Reachable now. -->
     <a class="header-link" id="linkSummary" href="summary.html">Summary &rsaquo;</a>
-    <a class="header-link" id="linkTasks" href="kitchen-tasks.html">Kitchen tasks &rsaquo;</a>
     <button type="button" class="glove-toggle" id="gloveToggle"
             aria-pressed="false" onclick="toggleGlove()">&#129508; Glove mode</button>
     <div class="lang-row">
