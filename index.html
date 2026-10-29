@@ -658,17 +658,45 @@
      */
     .header-title { width: auto; margin-right: auto; }
     .header-date { display: none; }
-    /* The row still fits on one line at 360px. The word "waste" is what goes:
-       the dashed box at the end of the row is already unambiguous, and the
-       letter and photo are doing the identifying. */
-    .dish { padding: 7px 10px; column-gap: 8px; }
+    /*
+     * Two lines on a phone, and this is the honest answer rather than a
+     * compromise. On one line at 390px the fixed columns ate everything and the
+     * dish name was left about 30px, so it rendered as "Garc Gr…" and "Test &…".
+     * A name truncated to four characters identifies nothing, and in glove mode
+     * the waste box was pushed off the row altogether.
+     *
+     * So the name gets a line of its own with the letter and the photo, and the
+     * controls get the line below. A row is about 95px instead of 60, which is
+     * still a quarter of the 390px card this replaced, and every part of it is
+     * legible and reachable.
+     */
+    .dish {
+      padding: 9px 12px;
+      grid-template-columns: 34px 38px minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      column-gap: 8px; row-gap: 8px;
+      align-items: center;
+    }
     .waste-lab { display: none; }
-    .dish .letter { min-width: 30px; height: 30px; font-size: 15px; }
-    .dish-img { width: 34px; height: 34px; }
-    .dish .dish-name { font-size: 13px; }
-    .dish input[type="number"] { width: 46px; font-size: 17px; }
-    .bump-btn { width: 44px; font-size: 13px; }
-    .waste-inp { width: 40px; }
+
+    .dish .letter   { grid-area: 1 / 1 / 2 / 2; min-width: 34px; height: 34px; font-size: 16px; }
+    .dish-img       { grid-area: 1 / 2 / 2 / 3; width: 38px; height: 38px; }
+    .dish .dish-name{ grid-area: 1 / 3 / 2 / 5; font-size: 14px; -webkit-line-clamp: 2; }
+
+    /* The count sits under the letter and photo it belongs to. */
+    .dish input[type="number"] { grid-area: 2 / 1 / 3 / 3; width: 100%; font-size: 19px; padding: 9px 2px; }
+    .bump      { grid-area: 2 / 3 / 3 / 4; justify-self: start; }
+    .waste-row { grid-area: 2 / 4 / 3 / 5; justify-self: end; }
+    .bump-btn  { width: 52px; font-size: 14px; }
+    .waste-inp { width: 46px; height: 40px; }
+
+    body.glove .dish { padding: 11px 12px; row-gap: 10px; }
+    body.glove .dish .letter { min-width: 42px; height: 42px; }
+    body.glove .dish-img { width: 44px; height: 44px; }
+    body.glove .dish .dish-name { font-size: 16px; }
+    body.glove .dish input[type="number"] { font-size: 22px; padding: 12px 2px; }
+    body.glove .bump-btn { width: 60px; min-height: 52px; font-size: 16px; }
+    body.glove .waste-inp { width: 54px; height: 52px; }
     body.glove .waste-lab { display: none; }
     .time-row { flex-direction: column; }
     #submitBtn { min-width: 0; flex: 1; padding: 14px 20px; }
