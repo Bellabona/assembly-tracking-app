@@ -668,6 +668,25 @@
      */
     .header-title { width: auto; margin-right: auto; }
     .header-date { display: none; }
+
+    /*
+     * The names wrap instead of scrolling sideways.
+     *
+     * Fourteen names in a rail three chips wide means swiping to find yourself at
+     * the start of every entry, and the chip you pick can end up off-screen, so
+     * nothing on the page shows who is selected. Wrapping costs about 170px once
+     * and removes both. Compact chips keep that cost down.
+     */
+    .emp-scroll {
+      display: flex; flex-wrap: wrap; overflow-x: visible;
+      scroll-snap-type: none; gap: 8px; padding-bottom: 2px;
+    }
+    .emp-chip { padding: 6px 12px 6px 6px; gap: 8px; }
+    .emp-chip .avatar { width: 28px; height: 28px; font-size: 11px; }
+    .emp-chip .emp-name { font-size: 13px; }
+    body.glove .emp-chip { padding: 8px 14px 8px 8px; }
+    body.glove .emp-chip .avatar { width: 36px; height: 36px; font-size: 13px; }
+    body.glove .emp-chip .emp-name { font-size: 15px; }
     /*
      * Two lines on a phone, and this is the honest answer rather than a
      * compromise. On one line at 390px the fixed columns ate everything and the
