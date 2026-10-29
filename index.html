@@ -671,20 +671,20 @@
      * legible and reachable.
      */
     .dish {
-      padding: 9px 12px;
-      grid-template-columns: 34px 38px minmax(0, 1fr) auto;
+      padding: 7px 12px;
+      grid-template-columns: 32px 36px minmax(0, 1fr) auto;
       grid-template-rows: auto auto;
-      column-gap: 8px; row-gap: 8px;
+      column-gap: 8px; row-gap: 6px;
       align-items: center;
     }
     .waste-lab { display: none; }
 
-    .dish .letter   { grid-area: 1 / 1 / 2 / 2; min-width: 34px; height: 34px; font-size: 16px; }
-    .dish-img       { grid-area: 1 / 2 / 2 / 3; width: 38px; height: 38px; }
+    .dish .letter   { grid-area: 1 / 1 / 2 / 2; min-width: 32px; height: 32px; font-size: 16px; }
+    .dish-img       { grid-area: 1 / 2 / 2 / 3; width: 36px; height: 36px; }
     .dish .dish-name{ grid-area: 1 / 3 / 2 / 5; font-size: 14px; -webkit-line-clamp: 2; }
 
     /* The count sits under the letter and photo it belongs to. */
-    .dish input[type="number"] { grid-area: 2 / 1 / 3 / 3; width: 100%; font-size: 19px; padding: 9px 2px; }
+    .dish input[type="number"] { grid-area: 2 / 1 / 3 / 3; width: 100%; font-size: 19px; padding: 8px 2px; }
     .bump      { grid-area: 2 / 3 / 3 / 4; justify-self: start; }
     .waste-row { grid-area: 2 / 4 / 3 / 5; justify-self: end; }
     .bump-btn  { width: 52px; font-size: 14px; }
@@ -849,7 +849,7 @@ const EMPLOYEES = [
 
                     // ── Dish names for Berlin (week 26.10–30.10) ─────────────────
     // AUTO-UPDATED by weekly scheduled task — do not edit manually
-    const DISH_NAMES = {
+    let DISH_NAMES = {
       A: "Garden Green Salad with Chicken",
       B: "Gyoza Korean Bowl",
       C: "Test & Tell: Puttanesca Chickpea & Lentil Salad",
@@ -877,7 +877,7 @@ const EMPLOYEES = [
     };
                     // ── Dish images for Berlin (week 26.10–30.10) ────────────────
     // AUTO-UPDATED by weekly scheduled task — do not edit manually
-    const DISH_IMAGES = {
+    let DISH_IMAGES = {
       A: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/20914ac4-bdbc-4514-ad9d-3d91d8253c18/W_20914ac4-bdbc-4514-ad9d-3d91d8253c18.png",
       B: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/5fa5f0c4-074c-49ca-a79f-80768b1db0dd/W_5fa5f0c4-074c-49ca-a79f-80768b1db0dd.png",
       C: "https://bellabona-e-commerce.s3.eu-central-1.amazonaws.com/ProductImages/80a3879c-340b-4383-b605-e6bc6c41d8c3/W_80a3879c-340b-4383-b605-e6bc6c41d8c3.png",
@@ -976,8 +976,9 @@ function addEmployeeChip(name) {
 
 EMPLOYEES.forEach(addEmployeeChip);
 
-// Tiles follow DISH_NAMES, so the weekly auto-update decides which ones exist.
-const DISH_LETTERS = Object.keys(DISH_NAMES);
+// Tiles follow DISH_NAMES. The list below is the offline fallback, written by the
+// weekly task; refreshMenuFromServer() replaces it with what admin actually has.
+let DISH_LETTERS = Object.keys(DISH_NAMES);
 // Sanity ceiling per dish per entry: a shift is tens of a dish, never hundreds,
 // so a fat-fingered 900 is refused instead of becoming truth.
 const MAX_PER_DISH = 400;
@@ -1072,7 +1073,15 @@ function parseCount(value) {
 }
 
 const dishBox = document.getElementById("dishes");
-DISH_LETTERS.forEach(letter => {
+
+/*
+ * Built in a function rather than inline, so the grid can be rebuilt when the
+ * server says the week's letters mean something else. Everything inside is
+ * exactly as it was.
+ */
+function buildDishTiles() {
+  dishBox.innerHTML = "";
+  DISH_LETTERS.forEach(letter => {
   const div = document.createElement("div");
   div.className = "dish";
   div.id = "tile_"+letter;
@@ -1154,7 +1163,63 @@ DISH_LETTERS.forEach(letter => {
     inp.style.pointerEvents = "auto";
   });
   dishBox.appendChild(div);
-});
+  });
+}
+buildDishTiles();
+
+/*
+ * The week's letters, from the same menu the stickers are printed from.
+ *
+ * The list in this file is written by a weekly task. The week that task does not
+ * run, every letter still points at last week's dish, and because an entry stores
+ * the dish NAME the whole week is then recorded against food nobody cooked. So
+ * the app asks the server what the letters mean today, and keeps the baked list
+ * only for a phone with no signal.
+ *
+ * It will not touch the grid once anyone has typed into it. Replacing tiles under
+ * someone mid-shift would lose their counts, and a stale name is a smaller
+ * problem than a lost count.
+ */
+function gridIsUntouched() {
+  if (dishBox.contains(document.activeElement)) return false;
+  return ![...dishBox.querySelectorAll("input[type=number]")].some(i => i.value !== "");
+}
+
+async function refreshMenuFromServer() {
+  let data = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(API_URL + "?view=menu&date="
+                            + encodeURIComponent(document.getElementById("date").value || ""),
+                            { signal: ctrl.signal, headers: { "Authorization": "Bearer " + INGEST_TOKEN } });
+    clearTimeout(t);
+    if (!res.ok) return;
+    data = JSON.parse(await res.text());
+  } catch (e) { return; }            // offline, slow, or refused: keep the baked list
+
+  const letters = data && data.letters;
+  // An empty week is reported as empty. Blanking the grid over a menu nobody has
+  // published yet would be worse than showing last week's.
+  if (!letters || !Object.keys(letters).length) return;
+  if (!gridIsUntouched()) return;
+
+  const names = {}, images = {};
+  Object.keys(letters).sort().forEach(L => {
+    names[L] = letters[L].name || "";
+    if (letters[L].image) images[L] = letters[L].image;
+  });
+  // Nothing to do when the server agrees with what is already on screen, which
+  // is the normal case and must not cost a rebuild on every load.
+  const incoming = Object.keys(names).sort();
+  if (dishSignature() === incoming.map(l => l+"="+names[l]).join("|")) return;
+
+  DISH_NAMES = names;
+  DISH_IMAGES = images;
+  DISH_LETTERS = Object.keys(names);
+  buildDishTiles();
+  updateTotal();
+}
 
 const roleTabs = document.getElementById("roleTabs");
   function setRolesEnabled(on){
@@ -1884,6 +1949,9 @@ updateQueueBanner();
 flushQueue();
 // After restoreDraft, so a restored selection is never blown away by a refresh.
 refreshRosterFromServer();
+// Asked after the grid exists, so a phone with no signal has already rendered the
+// fallback and a phone with signal corrects it a moment later.
+refreshMenuFromServer();
 </script>
 </body>
 </html>
