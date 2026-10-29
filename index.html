@@ -274,7 +274,17 @@
   .emp-chip.checked .emp-name { color: #FFFFFF; font-weight: 650; }
   .check-badge { display: none !important; }   /* the filled chip is the state */
 
-  .emp-chip.disabled { opacity: 0.4; pointer-events: none; filter: none; }
+  /*
+   * The unselected names are quieter, not broken. At 40% opacity with pointer
+   * events off they read as "unavailable", which is wrong: every one of them is
+   * a perfectly valid thing to tap, and one of them is what you meant if you
+   * caught the wrong chip.
+   */
+  .emp-chip.disabled { opacity: 1; pointer-events: auto; filter: none; }
+  .emp-chip.disabled .avatar { background: var(--brand-softer); color: var(--muted); }
+  .emp-chip.disabled .emp-name { color: var(--muted); }
+  .emp-chip.disabled:hover .avatar { background: var(--brand-soft); color: var(--brand); }
+  .emp-chip.disabled:hover .emp-name { color: var(--ink-2); }
 
   /* ───────────────────────────── dishes ─────────────────────────────
    *
@@ -957,15 +967,28 @@ function addEmployeeChip(name) {
   chip.innerHTML = '<div class="check-badge">&#10003;</div><div class="avatar">'
     + escapeHtml(name.slice(0,2).toUpperCase()) + '</div><div class="emp-name">'
     + escapeHtml(name) + '</div>';
+  /*
+   * One name per entry, and tapping a different name MOVES the selection.
+   *
+   * It used to disable every other chip the moment one was picked, so a cook who
+   * tapped the wrong name found the right one greyed out and unresponsive, with
+   * no hint that the way out was to tap their own name again. Watching that
+   * happen is what prompted this. The rule is unchanged — still exactly one
+   * person — but correcting a mis-tap is now the same gesture as making one.
+   */
   chip.addEventListener("click", () => {
-    if (chip.classList.contains("disabled")) return;
     if (chip.classList.contains("checked")) {
+      // Tapping your own name again releases it, which is how you clear the field.
       chip.classList.remove("checked");
       empBox.querySelectorAll(".emp-chip").forEach(c => c.classList.remove("disabled"));
       setRolesEnabled(false);
-    } else if (!empBox.querySelector(".emp-chip.checked")) {
+    } else {
+      empBox.querySelectorAll(".emp-chip").forEach(c => {
+        c.classList.remove("checked");
+        c.classList.add("disabled");
+      });
       chip.classList.add("checked");
-      empBox.querySelectorAll(".emp-chip").forEach(c => { if (c !== chip) c.classList.add("disabled"); });
+      chip.classList.remove("disabled");
       setRolesEnabled(true);
     }
     saveDraft();
