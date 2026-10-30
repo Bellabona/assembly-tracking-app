@@ -73,7 +73,7 @@ thumb_is_valid() {
 # weekly task rewrites that block. We only READ it, never reshape it.
 PAIRS="$WORK/pairs.txt"
 awk '
-  /const[ \t]+DISH_IMAGES[ \t]*=[ \t]*\{/ { inblock = 1; next }
+  /(const|let|var)[ \t]+DISH_IMAGES[ \t]*=[ \t]*\{/ { inblock = 1; next }
   inblock && /^[ \t]*\}[ \t]*;/           { inblock = 0; exit }
   inblock                                 { print }
 ' "$INDEX_HTML" \
@@ -191,10 +191,10 @@ else
 
   # Refuse to install a rewrite that lost anything we care about.
   if [ ! -s "$WORK/index.new" ] \
-     || [ "$(grep -c 'const EMPLOYEES = \[' "$WORK/index.new" || true)" -ne 1 ] \
-     || [ "$(grep -c 'const DISH_NAMES' "$WORK/index.new" || true)" -ne 1 ] \
-     || [ "$(grep -c 'const DISH_IMAGES' "$WORK/index.new" || true)" -ne 1 ] \
-     || [ "$(grep -c 'const THUMB_UUIDS' "$WORK/index.new" || true)" -ne 1 ] \
+     || [ "$(grep -cE '(const|let|var)[[:space:]]+EMPLOYEES[[:space:]]*=[[:space:]]*\[' "$WORK/index.new" || true)" -ne 1 ] \
+     || [ "$(grep -cE '(const|let|var)[[:space:]]+DISH_NAMES[[:space:]]*=' "$WORK/index.new" || true)" -ne 1 ] \
+     || [ "$(grep -cE '(const|let|var)[[:space:]]+DISH_IMAGES[[:space:]]*=' "$WORK/index.new" || true)" -ne 1 ] \
+     || [ "$(grep -cE '(const|let|var)[[:space:]]+THUMB_UUIDS[[:space:]]*=' "$WORK/index.new" || true)" -ne 1 ] \
      || [ "$(grep -c '</script>' "$WORK/index.new" || true)" -ne 1 ]; then
     log "WARNING: manifest rewrite failed its own sanity check - index.html left untouched."
   elif cmp -s "$WORK/index.new" "$INDEX_HTML"; then

@@ -33,7 +33,7 @@ import json, re, sys, os
 index_path, roster_path = sys.argv[1], sys.argv[2]
 src = open(index_path, encoding='utf-8').read()
 
-m = re.search(r'const\s+EMPLOYEES\s*=\s*\[(.*?)\];', src, re.S)
+m = re.search(r'(?:const|let|var)\s+EMPLOYEES\s*=\s*\[(.*?)\];', src, re.S)
 if not m:
     sys.exit("sync-roster: ERROR: could not find the EMPLOYEES array in index.html "
              "- did its shape change?")
