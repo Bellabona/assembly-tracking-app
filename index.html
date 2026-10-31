@@ -322,6 +322,21 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /* Cold first, then hot: the order the kitchen preps in, so a plate does not
+     sit waiting while the other half of the menu is made. */
+  .group-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 16px 0 7px; display: flex; align-items: center; gap: 7px;
+  }
+  .group-label:first-child { margin-top: 0; }
+  .group-label::before {
+    content: ''; width: 9px; height: 9px; border-radius: 50%;
+    background: #2E7FB8; flex: none;
+  }
+  .group-label[data-temp="hot"]::before { background: #C4511F; }
+  .group-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
   .dish {
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
@@ -690,6 +705,7 @@
 
   /* Taller rows and bigger targets, not a different layout. The old glove mode
      turned the grid into huge cards and left one dish on a phone screen. */
+  body.glove .group-label { font-size: 13px; }
   body.glove .dish { padding: 11px 14px; column-gap: 12px; }
   body.glove .dish .letter { height: 42px; min-width: 42px; font-size: 20px; border-radius: 10px; }
   body.glove .dish-img { width: 48px; height: 48px; }
@@ -839,7 +855,7 @@
 
   <div class="section-label" id="labDishes">Dishes assembled (A&#8211;Z)</div>
   <div class="menu-week" id="menuWeek" role="status" aria-live="polite"></div>
-  <div class="dishes" id="dishes"></div>
+  <div id="dishes"></div>
 
   <div class="section-label" id="labHours">Shift hours <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(for dishes per hour)</span></div>
   <div class="time-row">
@@ -1083,6 +1099,18 @@ EMPLOYEES.forEach(addEmployeeChip);
 // Tiles follow DISH_NAMES. The list below is the offline fallback, written by the
 // weekly task; refreshMenuFromServer() replaces it with what admin actually has.
 let DISH_LETTERS = Object.keys(DISH_NAMES);
+
+/*
+ * Which letters are cold and which are hot, straight from admin's own flag - the
+ * one behind the temperature filter in OMS - so this screen splits the menu the
+ * same way the rest of the business does.
+ *
+ * It starts empty on purpose. The baked list above is only a fallback for a phone
+ * with no signal, and a temperature baked beside it would go stale the first week
+ * the letters move, putting a hot dish under Cold. Unknown means ungrouped, which
+ * is the honest answer: offline the grid looks exactly as it did before.
+ */
+let DISH_TEMPS = {};
 // Sanity ceiling per dish per entry: a shift is tens of a dish, never hundreds,
 // so a fat-fingered 900 is refused instead of becoming truth.
 const MAX_PER_DISH = 400;
@@ -1112,7 +1140,8 @@ const STRINGS = {
     errMax: "that is higher than", errCheck: "please check the number.",
     errOneDish: "Please enter a quantity for at least one dish.",
     errRole: "Please select at least one role.",
-    checkTimes: "Shift looks like", checkTimesEnd: "— please check the times."
+    checkTimes: "Shift looks like", checkTimesEnd: "— please check the times.",
+    cold: "Cold", hot: "Hot"
   },
   de: {
     title: "Montage-Erfassung", summary: "Übersicht", tasks: "Küchenaufgaben",
@@ -1129,7 +1158,8 @@ const STRINGS = {
     errMax: "ist höher als", errCheck: "bitte die Zahl prüfen.",
     errOneDish: "Bitte für mindestens ein Gericht eine Menge eingeben.",
     errRole: "Bitte mindestens eine Rolle auswählen.",
-    checkTimes: "Schicht dauert", checkTimesEnd: "— bitte die Zeiten prüfen."
+    checkTimes: "Schicht dauert", checkTimesEnd: "— bitte die Zeiten prüfen.",
+    cold: "Kalt", hot: "Warm"
   }
 };
 let LANG = "en";
@@ -1185,7 +1215,34 @@ const dishBox = document.getElementById("dishes");
  */
 function buildDishTiles() {
   dishBox.innerHTML = "";
-  DISH_LETTERS.forEach(letter => {
+
+  /*
+   * Cold first, then hot. That is the order the kitchen preps in: a cold plate can
+   * wait, a hot one cannot sit in a warmer while the rest of the menu is made.
+   *
+   * Each group is its own card, rather than headings dropped inside one card,
+   * because the two-column desktop layout draws its dividers with nth-child and a
+   * heading in the middle of that would knock every border onto the wrong side.
+   */
+  const temp = l => (DISH_TEMPS[l] === "cold" || DISH_TEMPS[l] === "hot") ? DISH_TEMPS[l] : "";
+  const groups = DISH_LETTERS.some(l => temp(l))
+    ? [["cold", DISH_LETTERS.filter(l => temp(l) === "cold")],
+       ["hot",  DISH_LETTERS.filter(l => temp(l) === "hot")],
+       ["",     DISH_LETTERS.filter(l => !temp(l))]].filter(g => g[1].length)
+    : [["", DISH_LETTERS]];
+
+  groups.forEach(([group, groupLetters]) => {
+  if (group) {
+    const head = document.createElement("div");
+    head.className = "group-label";
+    head.dataset.temp = group;
+    dishBox.appendChild(head);
+  }
+  const box = document.createElement("div");
+  box.className = "dishes";
+  dishBox.appendChild(box);
+
+  groupLetters.forEach(letter => {
   const div = document.createElement("div");
   div.className = "dish";
   div.id = "tile_"+letter;
@@ -1266,9 +1323,21 @@ function buildDishTiles() {
     div.classList.add("editing");
     inp.style.pointerEvents = "auto";
   });
-  dishBox.appendChild(div);
+  box.appendChild(div);
+  });
+  });
+  relabelGroups();
+}
+
+// The group headings are the only text on this screen that the server does not
+// supply, so a language switch relabels them in place rather than rebuilding the
+// grid, which would cost whoever is mid-shift their counts.
+function relabelGroups() {
+  dishBox.querySelectorAll(".group-label").forEach(h => {
+    h.textContent = t(h.dataset.temp === "cold" ? "cold" : "hot");
   });
 }
+
 buildDishTiles();
 
 /*
@@ -1310,18 +1379,26 @@ async function refreshMenuFromServer() {
   LAST_MENU = data;
   showMenuWeek(data);
 
-  const names = {}, images = {};
+  const names = {}, images = {}, temps = {};
   Object.keys(letters).sort().forEach(L => {
     names[L] = letters[L].name || "";
     if (letters[L].image) images[L] = letters[L].image;
+    if (letters[L].temp) temps[L] = letters[L].temp;
   });
   // Nothing to do when the server agrees with what is already on screen, which
-  // is the normal case and must not cost a rebuild on every load.
+  // is the normal case and must not cost a rebuild on every load. The comparison
+  // is made here rather than with dishSignature(), which a saved draft is keyed
+  // on: adding the temperature to that key would throw away the draft of anyone
+  // who happened to be mid-entry when this shipped.
   const incoming = Object.keys(names).sort();
-  if (dishSignature() === incoming.map(l => l+"="+names[l]).join("|")) return;
+  const same = incoming.length === DISH_LETTERS.length
+    && incoming.every(l => DISH_NAMES[l] === names[l]
+                        && (DISH_TEMPS[l] || "") === (temps[l] || ""));
+  if (same) return;
 
   DISH_NAMES = names;
   DISH_IMAGES = images;
+  DISH_TEMPS = temps;
   DISH_LETTERS = Object.keys(names);
   buildDishTiles();
   updateTotal();
@@ -1872,6 +1949,7 @@ function applyLang(lang) {
 
   const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
   showMenuWeek(LAST_MENU);
+  relabelGroups();
   set(".header-title", t("title"));
   set("#linkSummary", t("summary") + " ›");
   set("#linkTasks", t("tasks") + " ›");
