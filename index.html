@@ -203,6 +203,13 @@
   .section-label::after {
     content: ''; flex: 1; height: 1px; background: var(--line);
   }
+  /* Which week these letters came from. Empty until the server answers, and it
+     takes no height until then, so a phone with no signal looks exactly as it
+     did before. */
+  .menu-week {
+    font-size: 12px; color: var(--muted); margin: -4px 0 10px;
+  }
+  .menu-week:empty { display: none; }
 
   /* ───────────────────────────── date ───────────────────────────── */
 
@@ -831,6 +838,7 @@
   <div class="emp-scroll" id="employees"></div>
 
   <div class="section-label" id="labDishes">Dishes assembled (A&#8211;Z)</div>
+  <div class="menu-week" id="menuWeek" role="status" aria-live="polite"></div>
   <div class="dishes" id="dishes"></div>
 
   <div class="section-label" id="labHours">Shift hours <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(for dishes per hour)</span></div>
@@ -1299,6 +1307,8 @@ async function refreshMenuFromServer() {
   // published yet would be worse than showing last week's.
   if (!letters || !Object.keys(letters).length) return;
   if (!gridIsUntouched()) return;
+  LAST_MENU = data;
+  showMenuWeek(data);
 
   const names = {}, images = {};
   Object.keys(letters).sort().forEach(L => {
@@ -1315,6 +1325,29 @@ async function refreshMenuFromServer() {
   DISH_LETTERS = Object.keys(names);
   buildDishTiles();
   updateTotal();
+}
+
+/*
+ * Name the week the letters belong to.
+ *
+ * The letters are reused every week against different food, so "B" alone tells a
+ * cook nothing about whether the grid in front of them is the right one. The
+ * server says which menu it answered with; this prints it. On a Saturday it will
+ * read as the week ahead, which is the week being assembled.
+ */
+let LAST_MENU = null;
+
+function showMenuWeek(data) {
+  const el = document.getElementById("menuWeek");
+  if (!el) return;
+  if (!data || !data.weekStart) { el.textContent = ""; return; }
+  const day = iso => {
+    const d = new Date(iso + "T00:00:00Z");
+    return isNaN(d) ? iso : d.toLocaleDateString(LANG === "de" ? "de-DE" : "en-GB",
+                                 { day: "numeric", month: "short", timeZone: "UTC" });
+  };
+  const span = data.weekEnd ? day(data.weekStart) + " \u2013 " + day(data.weekEnd) : day(data.weekStart);
+  el.textContent = (LANG === "de" ? "Men\u00fc: " : "Menu: ") + span;
 }
 
 const roleTabs = document.getElementById("roleTabs");
@@ -1838,6 +1871,7 @@ function applyLang(lang) {
   try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* ignore */ }
 
   const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+  showMenuWeek(LAST_MENU);
   set(".header-title", t("title"));
   set("#linkSummary", t("summary") + " ›");
   set("#linkTasks", t("tasks") + " ›");
