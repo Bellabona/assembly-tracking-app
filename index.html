@@ -886,7 +886,7 @@
 
 <div class="success-screen" id="successScreen">
   <div class="success-ring">&#10003;</div>
-  <div class="success-title">Saved!</div>
+  <div class="success-title" id="successTitle">Saved!</div>
   <div class="success-detail" id="successDetail"></div>
   <button class="btn-again" onclick="resetForm()">+ New Entry</button>
   <div class="undo-wrap"><button class="btn-undo" id="undoBtn" onclick="undoLast()" hidden>Undo this entry</button></div>
@@ -1132,6 +1132,9 @@ const STRINGS = {
     from: "From", to: "To", role: "Role", comment: "Comment", optional: "(optional)",
     commentPlaceholder: "Any notes about this session…", waste: "waste",
     submit: "Submit Entry", saving: "Saving…", saved: "Saved!",
+    joinedTitle: "You're on this shift", joinedBy: "was already logged by",
+    joinedAlready: "You were already on it — nothing was counted twice.",
+    joinedNote: "Counted once, with both of you on it. If this is not your shift, tell your shift leader.",
     newEntry: "+ New Entry", undo: "Undo this entry", undoing: "Undoing…",
     undone: "Entry undone", queuedTitle: "Saved on this phone",
     total: "Total", dish: "dish", dishesWord: "dishes", perHour: "dishes/hour",
@@ -1150,6 +1153,9 @@ const STRINGS = {
     from: "Von", to: "Bis", role: "Rolle", comment: "Kommentar", optional: "(optional)",
     commentPlaceholder: "Notizen zu dieser Schicht…", waste: "Ausschuss",
     submit: "Eintrag senden", saving: "Speichern…", saved: "Gespeichert!",
+    joinedTitle: "Du bist auf dieser Schicht", joinedBy: "wurde bereits erfasst von",
+    joinedAlready: "Du warst schon dabei — nichts wurde doppelt gezählt.",
+    joinedNote: "Einmal gezählt, mit euch beiden darauf. Wenn das nicht deine Schicht ist, sag der Schichtleitung Bescheid.",
     newEntry: "+ Neuer Eintrag", undo: "Eintrag zurücknehmen", undoing: "Wird zurückgenommen…",
     undone: "Eintrag zurückgenommen", queuedTitle: "Auf diesem Handy gespeichert",
     total: "Gesamt", dish: "Gericht", dishesWord: "Gerichte", perHour: "Gerichte/Stunde",
@@ -1541,17 +1547,45 @@ function submitForm() {
     const body = await res.text();
     if (looksLikeSaveFailure(body)) throw new Error("rejected the entry, " + firstError(body));
     clearDraft();
-    noteSent(date, selectedEmployees[0], currentTotal(), payload.entryId);
-    armUndo(payload);
     // Saved, so the next submit is a genuinely different entry and must not reuse
     // this id -- otherwise the server would dedupe a real second shift away.
     delete btn.dataset.entryId;
-    // Show dish NAMES back to staff, not letters: "A:12" is meaningless to read,
-    // and it is the confirmation they use to spot a mis-tap.
-    document.getElementById("successDetail").innerHTML =
-      escapeHtml(date)+"<br>"+selectedEmployees.map(n=>"<span>"+escapeHtml(n)+"</span>").join(' ')
-      +"<br>"+items.map(it => "<span>"+escapeHtml(shortDish(it.dish, it.letter))+" &times;"+it.qty+"</span>").join(' ')
-      +"<br><span>"+escapeHtml(rolesStr)+"</span>";
+
+    /*
+     * The server may have JOINED this to a shift a colleague already logged rather than
+     * recording a second one. Several of us work a batch together and each used to log the
+     * whole of it, so one 698-dish night arrived as four entries and the dashboard said 2.792.
+     *
+     * Saying so here matters: a join nobody expected is visible on the cook's own screen now,
+     * instead of being found weeks later by somebody reconciling a bonus.
+     */
+    let joined = null;
+    try { const j = JSON.parse(body); if (j && j.joined) joined = j; } catch (e) {}
+
+    const title = document.getElementById("successTitle");
+    if (joined) {
+      /*
+       * No undo on a join. The entry on the record is the colleague's, and the id this phone
+       * holds was never used -- so the undo button would have quietly done nothing at all, and
+       * taking somebody else's shift away is not what this button should do either.
+       */
+      title.textContent = t("joinedTitle");
+      document.getElementById("successDetail").innerHTML =
+        escapeHtml(date)
+        + "<br><span>" + escapeHtml(joined.leadEmployee || "") + " " + escapeHtml(t("joinedBy")) + "</span>"
+        + "<br><span>" + escapeHtml(String(joined.totalDishes || 0)) + " " + escapeHtml(t("dishesWord")) + "</span>"
+        + "<br>" + escapeHtml(joined.alreadyCredited ? t("joinedAlready") : t("joinedNote"));
+    } else {
+      title.textContent = t("saved");
+      noteSent(date, selectedEmployees[0], currentTotal(), payload.entryId);
+      armUndo(payload);
+      // Show dish NAMES back to staff, not letters: "A:12" is meaningless to read,
+      // and it is the confirmation they use to spot a mis-tap.
+      document.getElementById("successDetail").innerHTML =
+        escapeHtml(date)+"<br>"+selectedEmployees.map(n=>"<span>"+escapeHtml(n)+"</span>").join(' ')
+        +"<br>"+items.map(it => "<span>"+escapeHtml(shortDish(it.dish, it.letter))+" &times;"+it.qty+"</span>").join(' ')
+        +"<br><span>"+escapeHtml(rolesStr)+"</span>";
+    }
     document.getElementById("formSection").style.display = "none";
     document.getElementById("submitBar").style.display = "none";
     document.getElementById("successScreen").classList.add("visible");

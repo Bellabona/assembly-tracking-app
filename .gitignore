@@ -1,0 +1,2 @@
+# Installed for the test suites (see tests/README.md), never part of the app.
+node_modules/
